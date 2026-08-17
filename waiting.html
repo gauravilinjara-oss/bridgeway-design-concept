@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bridgeway — the waiting beat (study)</title>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=satoshi@700,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THE WAITING BEAT — a study, not a page.
+
+   mise builds "waiting" into its chapter list as a real beat:
+   the food cooks and you sit there. Bridgeway's whole claim is
+   that it works while you sleep, so the night is the obvious
+   place to try it.
+
+   The risk is entirely in HOW you take control, so this file
+   builds three versions of the same beat and lets you feel the
+   difference:
+
+     HOLD  scroll locks, a timer runs the night, skip always
+           available. Most dramatic, most likely to irritate.
+     LONG  nothing is hijacked at all. The night simply costs
+           3x the scroll distance. Safest; is it enough?
+     ASK   mise's actual move — ask permission, THEN take over.
+           "Stay with it" gives you HOLD. "Skip to morning" doesn't.
+
+   Duration is a slider because that is the real variable.
+   ============================================================ */
+
+:root{
+  --accent:#0083E7;
+  --gut:clamp(20px,4.6vw,64px);
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --display:'Satoshi',system-ui,sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+body{margin:0;background:#07080B;color:#F4F1EC;font-family:var(--sans)}
+
+.pad{height:110vh;display:grid;place-items:center;padding:0 var(--gut);text-align:center}
+.pad p{max-width:34ch;margin:0;font-family:var(--display);font-weight:500;
+  font-size:clamp(18px,2.4vw,34px);line-height:1.25;letter-spacing:-.02em;
+  color:rgba(247,244,239,.5)}
+
+/* ---- the stage ---- */
+.mv{position:relative}
+.mv[data-mode="long"]{height:900vh}
+.mv{height:420vh}
+.stage{position:sticky;top:0;height:100vh;overflow:hidden;background:#0A0C11}
+.plates img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
+.plates img:first-child{opacity:1}
+.scrim{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(10,10,18,0) 35%,rgba(10,10,18,.62) 100%)}
+
+/* ---- the diegetic layer, same anchors as index.html ---- */
+.dg{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none}
+.dg-anchor{position:absolute;left:50%;top:50%;
+  width:max(100vw,calc(100vh * 1.49051));height:max(100vh,calc(100vw / 1.49051));
+  transform:translate(-50%,-50%)}
+.dg-glow{position:absolute;left:74.1%;top:74.3%;width:5.6%;height:2.6%;border-radius:3px;
+  mix-blend-mode:screen;filter:blur(4px);opacity:calc(.35 + .65 * var(--bp,0));
+  background:radial-gradient(58% 118% at 50% 50%,rgba(148,204,255,.85) 0%,rgba(0,131,231,.42) 44%,rgba(0,131,231,0) 78%)}
+.dg-spill{position:absolute;left:65.5%;top:73.2%;width:25%;height:9.5%;mix-blend-mode:screen;
+  filter:blur(9px);transform:rotateZ(-3.5deg) scaleY(.66);opacity:calc(.25 + .75 * var(--bp,0));
+  background:radial-gradient(46% 58% at 38% 30%,rgba(120,186,255,.42) 0%,rgba(48,120,200,.18) 44%,rgba(0,0,0,0) 76%)}
+.dg-beam{position:absolute;left:65.5%;top:47%;width:12%;height:29%;filter:blur(7px);
+  clip-path:polygon(6% 0%,94% 0%,60% 100%,40% 100%);opacity:calc(var(--bp,0) * .9);
+  background:linear-gradient(180deg,rgba(120,190,255,.18) 0%,rgba(120,190,255,.09) 55%,rgba(120,190,255,.02) 100%)}
+.dg-hud{position:absolute;left:51.5%;top:43%;width:28.5%;
+  transform:rotateY(-19deg) rotateX(5deg);transform-origin:70% 100%;font-family:var(--mono);
+  background:linear-gradient(158deg,rgb(10 17 30 / calc(.56 + .28*var(--bp,0))),rgb(7 12 24 / calc(.36 + .30*var(--bp,0))));
+  backdrop-filter:blur(calc(3px + 6px*var(--bp,0))) saturate(1.15);
+  -webkit-backdrop-filter:blur(calc(3px + 6px*var(--bp,0))) saturate(1.15);
+  box-shadow:0 40px 90px -50px rgba(0,0,0,.9);
+  padding:clamp(10px,1.25vw,22px) clamp(11px,1.45vw,26px) clamp(12px,1.45vw,25px)}
+.dg-hud::before,.dg-hud::after,.dg-c1,.dg-c2{content:"";position:absolute;
+  width:clamp(12px,1.45vw,26px);height:clamp(12px,1.45vw,26px);border:1.5px solid var(--accent)}
+.dg-hud::before{left:-1px;top:-1px;border-right:0;border-bottom:0}
+.dg-hud::after{right:-1px;bottom:-1px;border-left:0;border-top:0}
+.dg-c1{right:-1px;top:-1px;border-left:0;border-bottom:0}
+.dg-c2{left:-1px;bottom:-1px;border-right:0;border-top:0}
+.dg-tab{position:absolute;left:-1px;top:0;transform:translateY(-100%);background:var(--accent);
+  color:#fff;padding:3px clamp(6px,.68vw,12px);font-size:clamp(7px,.66vw,11px);
+  letter-spacing:.11em;text-transform:uppercase}
+.dg-clock{display:flex;justify-content:space-between;font-size:clamp(7px,.66vw,11px);
+  letter-spacing:.07em;color:rgba(210,228,255,.55);padding-bottom:clamp(7px,.8vw,14px);
+  border-bottom:1px solid rgba(140,190,255,.16)}
+.dg-list{list-style:none;margin:0;padding:clamp(7px,.85vw,15px) 0 0;display:grid;gap:clamp(4px,.48vw,9px)}
+.dg-list li{--on:clamp(0,(var(--bp,0) - var(--th,1)) * 16,1);position:relative;display:flex;
+  justify-content:space-between;gap:10px;font-size:clamp(8px,.8vw,13px);
+  color:rgb(230 241 255 / calc(.96 - var(--on) * .42))}
+.dg-list li .t{color:rgba(160,200,250,.5);font-size:clamp(7px,.64vw,10.5px);opacity:var(--on)}
+.dg-list li::after{content:"";position:absolute;left:0;top:52%;height:1px;
+  width:calc(var(--on) * 100%);background:rgba(150,195,250,.75)}
+.dg-list li.hold{--on:0;color:rgba(230,241,255,.96)}
+.dg-foot{margin-top:clamp(8px,.95vw,16px);padding-top:clamp(7px,.8vw,14px);
+  border-top:1px solid rgba(140,190,255,.16);display:flex;justify-content:space-between;
+  font-size:clamp(7px,.66vw,11px);letter-spacing:.06em;color:rgba(200,224,255,.6)}
+.dg-foot b{color:#fff;font-weight:500}
+.dg-say{position:absolute;left:var(--gut);bottom:22%;margin:0;z-index:3;font-family:var(--display);
+  font-weight:500;font-size:clamp(15px,1.72vw,29px);line-height:1.22;letter-spacing:-.015em;
+  color:rgba(247,244,239,.94)}
+.dg-say em{font-style:normal;color:rgba(247,244,239,.44)}
+/* two lines of copy competing in one frame reads as clutter — the
+   hold message owns the screen while it has control */
+.dg-say{transition:opacity .5s var(--ease)}
+.stage.is-holding .dg-say{opacity:0}
+
+/* ============================================================
+   THE HOLD
+   Every rule here exists to keep a locked page from reading as
+   a broken page: say why, show it ending, and always offer out.
+   ============================================================ */
+/* Left-aligned into the slot .dg-say vacates, NOT centred. The HUD's
+   left edge is 51.5% of a cover-sized anchor box, which always lands
+   just right of viewport centre — so the whole left half is safe, and
+   a centred block here collides the moment the plate zooms in. */
+.hold-ui{position:absolute;left:var(--gut);bottom:18%;z-index:8;
+  display:grid;justify-items:start;gap:15px;width:min(44vw,430px);
+  opacity:0;visibility:hidden;transition:opacity .55s var(--ease),visibility .55s;
+  pointer-events:none}
+.hold-ui.on{opacity:1;visibility:visible;pointer-events:auto}
+.hold-why{margin:0;font-family:var(--display);font-weight:500;
+  font-size:clamp(15px,1.72vw,29px);line-height:1.22;letter-spacing:-.015em;
+  color:rgba(247,244,239,.94)}
+.hold-why em{font-style:normal;color:rgba(247,244,239,.44)}
+/* the bar is the promise that this ends */
+.hold-bar{width:100%;height:2px;background:rgba(255,255,255,.16);overflow:hidden}
+.hold-bar i{display:block;height:100%;width:calc(var(--hp,0) * 100%);background:var(--accent)}
+.hold-skip{appearance:none;border:1px solid rgba(255,255,255,.28);background:rgba(10,14,24,.5);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  color:rgba(255,255,255,.82);border-radius:999px;padding:9px 20px;cursor:pointer;
+  font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  transition:background .3s var(--ease),color .3s var(--ease),border-color .3s var(--ease)}
+.hold-skip:hover{background:#fff;color:#0B0D12;border-color:#fff}
+.hold-skip:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* ---- ASK: permission before control ---- */
+.ask{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9;
+  display:grid;justify-items:center;gap:20px;text-align:center;width:min(88vw,540px);
+  opacity:0;visibility:hidden;transition:opacity .6s var(--ease),visibility .6s;pointer-events:none}
+.ask.on{opacity:1;visibility:visible;pointer-events:auto}
+.ask h3{margin:0;font-family:var(--display);font-weight:700;
+  font-size:clamp(24px,3.2vw,50px);line-height:1.02;letter-spacing:-.035em;color:#F7F4EF}
+.ask-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.ask-row button{appearance:none;cursor:pointer;border-radius:999px;padding:12px 26px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  border:1px solid rgba(255,255,255,.28);background:transparent;color:rgba(255,255,255,.8);
+  transition:background .3s var(--ease),color .3s var(--ease)}
+.ask-row button.solid{background:#fff;color:#0B0D12;border-color:#fff}
+.ask-row button:hover{background:rgba(255,255,255,.14)}
+.ask-row button.solid:hover{background:rgba(255,255,255,.86)}
+
+/* ---- study chrome ---- */
+.panelui{position:fixed;right:16px;top:16px;z-index:60;display:grid;gap:10px;
+  padding:12px;border-radius:14px;background:rgba(14,18,28,.82);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.12);width:216px}
+.panelui .modes{display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(0,0,0,.35)}
+.panelui .modes button{flex:1;appearance:none;border:0;cursor:pointer;border-radius:999px;
+  padding:7px 0;background:transparent;color:rgba(255,255,255,.6);
+  font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.panelui .modes button[aria-pressed="true"]{background:#fff;color:#0B0D12}
+.panelui label{display:grid;gap:6px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.panelui input[type=range]{appearance:none;height:2px;border-radius:2px;background:rgba(255,255,255,.24)}
+.panelui input[type=range]::-webkit-slider-thumb{appearance:none;width:11px;height:11px;
+  border-radius:50%;background:#fff;cursor:pointer}
+.panelui .hint{font-family:var(--mono);font-size:9.5px;line-height:1.6;color:rgba(255,255,255,.36)}
+
+@media (prefers-reduced-motion:reduce){
+  /* never trap someone who asked for less motion */
+  .hold-ui,.ask{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="panelui">
+  <div class="modes" role="group" aria-label="Mode">
+    <button type="button" data-mode="hold" aria-pressed="true">Hold</button>
+    <button type="button" data-mode="long" aria-pressed="false">Long</button>
+    <button type="button" data-mode="ask"  aria-pressed="false">Ask</button>
+  </div>
+  <label>Hold <span id="durOut">7.0s</span>
+    <input id="dur" type="range" min="2" max="14" step="0.5" value="7">
+  </label>
+  <p class="hint" id="hint">Scroll locks at 2AM. Timer runs the night. Skip always available.</p>
+</div>
+
+<section class="pad"><p>Alex locked up at eleven. Scroll on.</p></section>
+
+<section class="mv" id="mv" data-mode="hold">
+  <div class="stage">
+    <div class="plates" aria-hidden="true">
+      <img src="assets/story-04.jpg" alt="">
+      <img id="dawn" src="assets/story-05.jpg" alt="">
+    </div>
+    <div class="scrim" aria-hidden="true"></div>
+
+    <div class="dg" id="dg" aria-hidden="true">
+      <div class="dg-anchor">
+        <span class="dg-spill"></span><span class="dg-glow"></span><span class="dg-beam"></span>
+        <div class="dg-hud">
+          <span class="dg-c1"></span><span class="dg-c2"></span>
+          <span class="dg-tab">The pile</span>
+          <div class="dg-clock"><span>Overnight</span><span id="clock">11:04 PM</span></div>
+          <ul class="dg-list" id="list">
+            <li><span>Marcus &middot; six weeks quiet</span><span class="t">11:20p</span></li>
+            <li><span>Tomorrow's class &middot; post</span><span class="t">12:41a</span></li>
+            <li><span>Danielle &middot; review reply</span><span class="t">1:15a</span></li>
+            <li><span>Priya &middot; missed her drop-in</span><span class="t">2:03a</span></li>
+            <li><span>The waitlist &middot; three names</span><span class="t">3:22a</span></li>
+            <li><span>Saturday open gym &middot; note</span><span class="t">4:48a</span></li>
+            <li><span>James &middot; asked about pricing</span><span class="t">5:56a</span></li>
+            <li class="hold"><span>The two she has to answer</span><span class="t">&mdash;</span></li>
+          </ul>
+          <div class="dg-foot"><span>Drafted <b id="count">0</b> of 7</span><span>Sent <b>0</b></span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="dg-say">You locked up at eleven.<br><em>It kept working.</em></p>
+
+    <div class="hold-ui" id="holdUI">
+      <p class="hold-why">You can't scroll the night away.<br><em>Neither could she.</em></p>
+      <span class="hold-bar"><i></i></span>
+      <button type="button" class="hold-skip" id="skip">Skip to morning</button>
+    </div>
+
+    <div class="ask" id="askUI">
+      <h3>The night takes as long as it takes.</h3>
+      <div class="ask-row">
+        <button type="button" class="solid" id="askStay">Stay with it</button>
+        <button type="button" id="askSkip">Skip to morning</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pad"><p>By 6:40 AM the work is ready. Nothing has been sent.</p></section>
+
+<script>
+var clamp = function(v,a,b){ return v<a?a:v>b?b:v; };
+
+var mv=document.getElementById('mv'), stage=document.querySelector('.stage'), dg=document.getElementById('dg'),
+    dawn=document.getElementById('dawn'), clockEl=document.getElementById('clock'),
+    countEl=document.getElementById('count'), holdUI=document.getElementById('holdUI'),
+    askUI=document.getElementById('askUI'), skipBtn=document.getElementById('skip'),
+    durEl=document.getElementById('dur'), durOut=document.getElementById('durOut'),
+    hintEl=document.getElementById('hint');
+
+var TH=[0.06,0.17,0.28,0.39,0.50,0.62,0.74];
+[].slice.call(document.querySelectorAll('#list li:not(.hold)'))
+  .forEach(function(li,i){ li.style.setProperty('--th', TH[i]); });
+
+var HOLD_AT = 0.35;            /* the night stops here — roughly 2AM */
+var mode = 'hold', dur = 7000;
+var reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* ---- painting ---- */
+function stamp(bp){
+  var t=Math.round(1384+(1820-1384)*bp), h=Math.floor(t/60)%24, m=t%60;
+  return (h%12||12)+':'+(m<10?'0':'')+m+' '+(h>=12?'PM':'AM');
+}
+function paint(bp){
+  dg.style.setProperty('--bp', bp.toFixed(3));
+  dawn.style.opacity = clamp((bp-0.12)/0.8,0,1).toFixed(3);
+  var n=0; for(var i=0;i<TH.length;i++) if(bp>=TH[i]) n++;
+  if(countEl._n!==n){ countEl._n=n; countEl.textContent=n; }
+  var s=stamp(bp); if(clockEl._s!==s){ clockEl._s=s; clockEl.textContent=s; }
+}
+
+/* ---- scroll lock ----
+   preventDefault rather than position:fixed on purpose: the stage is
+   sticky, and reflowing the body under a sticky element makes it jump. */
+var SCROLL_KEYS={ArrowDown:1,ArrowUp:1,PageDown:1,PageUp:1,Home:1,End:1,' ':1,Spacebar:1};
+function eat(e){ e.preventDefault(); }
+/* block the scroll keys, but never the controls — the skip button has
+   to stay operable by Space/Enter or the hold becomes a keyboard trap */
+function interactive(t){
+  return !!t && (/^(INPUT|BUTTON|TEXTAREA|SELECT|A)$/.test(t.tagName) || t.isContentEditable);
+}
+function eatKeys(e){ if(SCROLL_KEYS[e.key] && !interactive(e.target)) e.preventDefault(); }
+var locked=false, lockY=0;
+function lock(){
+  if(locked) return; locked=true; lockY=scrollY;
+  addEventListener('wheel',eat,{passive:false});
+  addEventListener('touchmove',eat,{passive:false});
+  addEventListener('keydown',eatKeys);
+}
+function unlock(){
+  if(!locked) return; locked=false;
+  removeEventListener('wheel',eat,{passive:false});
+  removeEventListener('touchmove',eat,{passive:false});
+  removeEventListener('keydown',eatKeys);
+}
+
+/* ---- the hold ---- */
+var state='idle';           /* idle | holding | done */
+var raf=null, t0=0;
+
+function runHold(){
+  state='holding'; lock(); stage.classList.add('is-holding');
+  holdUI.classList.add('on'); askUI.classList.remove('on');
+  t0=0;
+  cancelAnimationFrame(raf);
+  raf=requestAnimationFrame(function step(ts){
+    if(!t0) t0=ts;
+    var hp=clamp((ts-t0)/dur,0,1);
+    holdUI.style.setProperty('--hp',hp.toFixed(3));
+    paint(HOLD_AT + (1-HOLD_AT)*hp);
+    if(hp<1) raf=requestAnimationFrame(step); else finish();
+  });
+}
+function finish(){
+  cancelAnimationFrame(raf);
+  state='done'; unlock(); stage.classList.remove('is-holding');
+  holdUI.classList.remove('on'); askUI.classList.remove('on');
+  paint(1);
+}
+skipBtn.addEventListener('click', finish);
+document.getElementById('askSkip').addEventListener('click', finish);
+document.getElementById('askStay').addEventListener('click', runHold);
+addEventListener('keydown', function(e){ if(e.key==='Escape' && state==='holding') finish(); });
+
+/* ---- scroll ---- */
+function onScroll(){
+  /* preventDefault cannot stop a gesture the compositor has already
+     committed to, so momentum leaks through the lock. Clamping the
+     position catches that, plus scrollbar drags and anything else
+     that never fires a wheel event. */
+  if(locked){
+    if(Math.abs(scrollY-lockY)>1) scrollTo(0,lockY);
+    return;
+  }
+  var r=mv.getBoundingClientRect(), span=mv.offsetHeight-innerHeight;
+  var p=clamp(-r.top/span,0,1);
+
+  /* left the beat entirely — reset so it can be replayed */
+  if(p<=0 || p>=1){
+    if(state!=='idle'){ finish(); state='idle'; holdUI.style.setProperty('--hp','0'); }
+    paint(p>=1?1:0);
+    return;
+  }
+  if(mode==='long' || reduce){ paint(p); return; }
+  if(state==='holding') return;              /* the timer owns bp */
+  if(state==='done'){ paint(clamp(p,HOLD_AT,1)); return; }
+
+  paint(Math.min(p,HOLD_AT));
+  if(p>=HOLD_AT){
+    if(mode==='hold') runHold();
+    else if(mode==='ask'){ lock(); stage.classList.add('is-holding'); askUI.classList.add('on'); state='holding'; }
+  }
+}
+addEventListener('scroll', onScroll, {passive:true});
+addEventListener('resize', onScroll);
+
+/* ---- study controls ---- */
+var HINTS={
+  hold:'Scroll locks at 2AM. Timer runs the night. Skip always available.',
+  long:'Nothing hijacked. The night just costs 3x the scroll distance.',
+  ask:'mise’s move: ask first, then take over. Stay = the held version.'
+};
+document.querySelectorAll('.modes button').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('.modes button').forEach(function(o){
+      o.setAttribute('aria-pressed', String(o===b));
+    });
+    mode=b.dataset.mode; mv.dataset.mode=mode; hintEl.textContent=HINTS[mode];
+    finish(); state='idle'; holdUI.style.setProperty('--hp','0');
+    scrollTo(0, mv.offsetTop - innerHeight*0.9);
+    requestAnimationFrame(onScroll);
+  });
+});
+durEl.addEventListener('input', function(){
+  dur=parseFloat(durEl.value)*1000; durOut.textContent=durEl.value+'s';
+});
+
+paint(0); onScroll();
+</script>
+</body>
+</html>

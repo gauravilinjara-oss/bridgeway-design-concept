@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bridgeway — the pile, three ways (study)</title>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f%5B%5D=satoshi@700,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THE PILE — three treatments of the same nine items.
+
+   CURRENT   nine at once, as it ships today. The fall is good;
+             the pile at rest hides its own text behind itself.
+   SEQUENCE  one at a time, each legible alone, then all nine
+             revealed together. You can't feel nine things at
+             once; you can feel one thing nine times.
+   PHONE     diegetic — the notifications stack on the phone
+             Alex left on the bench, same anchor as beat 5, so
+             beats 1 and 5 become one continuous idea.
+
+   All three are scrubbed off one 0-1 value so they can be
+   compared at identical progress. Cards are generated from one
+   DATA array, so the content can never drift between modes.
+   ============================================================ */
+:root{
+  --accent:#0083E7;
+  --gut:clamp(20px,4.6vw,64px);
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --display:'Satoshi',system-ui,sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box}
+body{margin:0;background:#07080B;color:#F4F1EC;font-family:var(--sans);
+  height:100vh;overflow:hidden}
+
+.stage{position:absolute;inset:0;overflow:hidden;background:#0A0C11}
+.plate{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  filter:brightness(.66) saturate(.8) hue-rotate(202deg)}
+.scrim{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(10,10,18,0) 30%,rgba(10,10,18,.7) 100%)}
+
+.head{position:absolute;left:var(--gut);top:9%;z-index:6;margin:0;max-width:16ch;
+  font-family:var(--display);font-weight:700;font-size:clamp(24px,3.5vw,56px);
+  line-height:.99;letter-spacing:-.035em;color:#F7F4EF}
+
+.view{position:absolute;inset:0;z-index:4;opacity:0;visibility:hidden;
+  transition:opacity .45s var(--ease),visibility .45s}
+.view.on{opacity:1;visibility:visible}
+
+/* ---- the card, shared by CURRENT and SEQUENCE ---- */
+.card{
+  position:absolute;width:clamp(200px,18.5vw,268px);padding:14px 16px 15px;
+  border-radius:20px;transform-origin:50% 50%;
+  background:linear-gradient(160deg,rgba(40,44,57,.5),rgba(22,25,34,.44));
+  border:1px solid rgba(255,255,255,.16);
+  backdrop-filter:blur(26px) saturate(170%) brightness(1.16);
+  -webkit-backdrop-filter:blur(26px) saturate(170%) brightness(1.16);
+  box-shadow:0 28px 64px -20px rgba(0,0,0,.7),0 4px 16px -6px rgba(0,0,0,.4),
+    inset 0 1px 0 rgba(255,255,255,.22);
+}
+.c-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px}
+.c-title{font-family:var(--display);font-size:14px;font-weight:600;letter-spacing:-.01em;color:#F2F4F8}
+.c-meta{margin:0;font-size:12px;line-height:1.5;color:rgba(233,237,246,.6)}
+.age{flex:none;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;padding:4px 9px;border-radius:999px;
+  color:#FFC46B;background:rgba(255,159,64,.14);border:1px solid rgba(255,159,64,.2)}
+
+/* ============================================================
+   CURRENT — as it ships. Overlapping scatter, gravity fall.
+   ============================================================ */
+#vCurrent .field{position:absolute;left:var(--gut);right:var(--gut);top:34%;
+  height:clamp(300px,44vh,440px);perspective:1100px;perspective-origin:50% 30%}
+#vCurrent .card{
+  left:var(--x);top:var(--y);
+  --kg:clamp(0,(var(--p,0)/.62 - var(--th,0))*3.1,1);
+  --ke:calc(var(--kg)*var(--kg));
+  --ks:clamp(0,(var(--p,0)/.62 - var(--th,0) - .323)*5.6,1);
+  --kf:clamp(0,(var(--p,0) - .82)/.18*2.1,1);
+  opacity:calc(clamp(0,(var(--kg) - .62)*3.6,1));
+  filter:blur(calc((1 - var(--kg))*4px));
+  transform:
+    translate(calc(var(--kf)*var(--kf)*var(--fx,0px)),calc(var(--kf)*var(--kf)*125vh))
+    rotate(calc(var(--fr,0deg)*var(--kf)))
+    translate3d(0,calc((1 - var(--ke))*-22vh + 13px*var(--ks)*(1 - var(--ks))),
+      calc((1 - var(--ke))*90px))
+    rotateX(calc((1 - var(--ke))*13deg))
+    rotate(calc(var(--rot,0deg) + (1 - var(--ke))*var(--spin,8deg)));
+}
+
+/* ============================================================
+   SEQUENCE — each card gets the frame to itself, then settles
+   into a slot whose text is never covered, then all nine read
+   together before the fall.
+
+   --own   0..1 across this card's solo window
+   --set   0..1 as it retreats from centre stage to its slot
+   --kf    the shared fall
+   ============================================================ */
+#vSequence .field{position:absolute;left:var(--gut);right:var(--gut);top:30%;
+  height:clamp(320px,48vh,470px);perspective:1200px;perspective-origin:50% 40%}
+#vSequence .card{
+  left:var(--x);top:var(--y);
+  --own:clamp(0,(var(--p,0) - var(--th,0))*var(--rate,14),1);
+  /* the settle has to FINISH before the next card claims the centre,
+     or two cards fight over the middle of the frame */
+  --set:clamp(0,(var(--p,0) - var(--th,0) - .034)*26,1);
+  /* once the last card is down, the whole pile comes back up to full
+     so the reveal lands with weight instead of as nine ghosts */
+  --rev:clamp(0,(var(--p,0) - .66)*7,1);
+  --kf:clamp(0,(var(--p,0) - .84)/.16*2.1,1);
+  /* travels from centre stage to its resting slot */
+  --dx:calc((1 - var(--set)) * var(--cx,0px));
+  --dy:calc((1 - var(--set)) * var(--cy,0px));
+  opacity:calc(var(--own) * (1 - var(--set)*.46*(1 - var(--rev))));
+  z-index:calc(50 - var(--i,0));
+  transform:
+    translate(calc(var(--kf)*var(--kf)*var(--fx,0px)),calc(var(--kf)*var(--kf)*125vh))
+    rotate(calc(var(--fr,0deg)*var(--kf)))
+    translate(var(--dx),var(--dy))
+    scale(calc(1 + (1 - var(--set))*.34))
+    rotate(calc(var(--rot,0deg) * var(--set)))
+    translateY(calc((1 - var(--own))*26px));
+}
+/* the solo card is lit; the settled ones recede behind it */
+#vSequence .card .c-title{font-size:calc(14px + (1 - var(--set))*3px)}
+#vSequence .reveal{position:absolute;left:var(--gut);bottom:9%;z-index:8;margin:0;
+  font-family:var(--display);font-weight:500;font-size:clamp(15px,1.7vw,28px);
+  letter-spacing:-.015em;color:rgba(247,244,239,.94);
+  opacity:clamp(0,(var(--p,0) - .70)*9,1)}
+#vSequence .reveal em{font-style:normal;color:rgba(247,244,239,.44)}
+
+/* ============================================================
+   PHONE — diegetic. Same anchor as beat 5: the notifications
+   stack above the phone on the bench, in the room's perspective.
+   ============================================================ */
+#vPhone .anchor{position:absolute;left:50%;top:50%;
+  width:max(100vw,calc(100vh*1.49051));height:max(100vh,calc(100vw/1.49051));
+  transform:translate(-50%,-50%)}
+#vPhone .glow{position:absolute;left:74.1%;top:74.3%;width:5.6%;height:2.6%;
+  border-radius:3px;mix-blend-mode:screen;filter:blur(4px);
+  opacity:calc(.3 + .7*clamp(0,var(--p,0)*2,1));
+  background:radial-gradient(58% 118% at 50% 50%,rgba(148,204,255,.85) 0%,rgba(0,131,231,.42) 44%,rgba(0,131,231,0) 78%)}
+#vPhone .spill{position:absolute;left:65.5%;top:73.2%;width:25%;height:9.5%;
+  mix-blend-mode:screen;filter:blur(9px);transform:rotateZ(-3.5deg) scaleY(.66);
+  opacity:calc(.2 + .8*clamp(0,var(--p,0)*2,1));
+  background:radial-gradient(46% 58% at 38% 30%,rgba(255,178,96,.4) 0%,rgba(200,110,40,.18) 44%,rgba(0,0,0,0) 76%)}
+#vPhone .beam{position:absolute;left:65.5%;top:60%;width:12%;height:16%;filter:blur(7px);
+  clip-path:polygon(8% 0%,92% 0%,58% 100%,42% 100%);
+  opacity:calc(clamp(0,var(--p,0)*2,1) * .8 * (1 - clamp(0,(var(--p,0) - .84)/.16,1)));
+  background:linear-gradient(180deg,rgba(255,186,110,.2) 0%,rgba(255,186,110,.09) 55%,rgba(255,186,110,.02) 100%)}
+#vPhone .stack{position:absolute;left:51.5%;top:34%;width:28.5%;
+  transform-origin:70% 100%;font-family:var(--mono);
+  /* the whole stack tips and drops, rather than nine separate falls */
+  --kf:clamp(0,(var(--p,0) - .84)/.16,1);
+  transform:
+    translateY(calc(var(--kf)*var(--kf)*118vh))
+    rotateY(-19deg) rotateX(5deg)
+    rotate(calc(var(--kf)*9deg))}
+#vPhone .stack-tab{position:absolute;left:-1px;top:0;transform:translateY(-100%);
+  background:#E8934A;color:#1A1206;padding:3px clamp(6px,.68vw,12px);
+  font-size:clamp(7px,.66vw,11px);letter-spacing:.11em;text-transform:uppercase}
+#vPhone .rows{list-style:none;margin:0;padding:0;display:grid;
+  gap:clamp(3px,.36vw,7px)}
+#vPhone .rows li{
+  --own:clamp(0,(var(--p,0) - var(--th,0))*11,1);
+  /* SEQUENCE's one-at-a-time emphasis, folded in: a row peaks as it
+     lands and relaxes as the next one arrives. This is the part of
+     SEQUENCE that does the emotional work — you register each item
+     alone instead of reading a wall. */
+  --fresh:calc(var(--own) * (1 - clamp(0,(var(--p,0) - var(--th,0) - .072)*10,1)));
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:clamp(6px,.72vw,12px) clamp(8px,.9vw,15px);
+  background:linear-gradient(158deg,
+    rgb(26 20 14 / calc(.72 + var(--fresh)*.2)),rgba(16,12,8,.55));
+  border-left:calc(2px + var(--fresh)*2px) solid
+    rgba(232,147,74,calc(.25 + var(--own)*.35 + var(--fresh)*.4));
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+  opacity:var(--own);
+  transform:translateY(calc((1 - var(--own))*-14px))
+    scaleY(calc(.72 + var(--own)*.28))
+    scale(calc(1 + var(--fresh)*.045));
+  transform-origin:0% 100%}
+#vPhone .rows .n{font-size:clamp(8px,.8vw,13px);
+  color:rgb(242 234 225 / calc(.46 + var(--own)*.4 + var(--fresh)*.14))}
+#vPhone .rows .a{flex:none;font-size:clamp(7px,.62vw,10px);letter-spacing:.08em;
+  text-transform:uppercase;color:rgba(255,196,107,calc(.4 + var(--own)*.5))}
+#vPhone .count{margin-top:clamp(7px,.8vw,13px);padding-top:clamp(6px,.7vw,12px);
+  border-top:1px solid rgba(232,147,74,.18);display:flex;justify-content:space-between;
+  font-size:clamp(7px,.66vw,11px);letter-spacing:.06em;color:rgba(240,220,200,.6)}
+#vPhone .count b{color:#fff;font-weight:500}
+#vPhone .say{position:absolute;left:var(--gut);bottom:14%;z-index:8;margin:0;
+  font-family:var(--display);font-weight:500;font-size:clamp(15px,1.7vw,28px);
+  letter-spacing:-.015em;color:rgba(247,244,239,.94);
+  opacity:clamp(0,(var(--p,0) - .58)*7,1)}
+#vPhone .say em{font-style:normal;color:rgba(247,244,239,.44)}
+
+/* ---- study chrome ---- */
+.ui{position:fixed;right:16px;top:16px;z-index:60;display:grid;gap:10px;width:250px;
+  padding:12px;border-radius:14px;background:rgba(14,18,28,.84);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.12)}
+.ui .modes{display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(0,0,0,.35)}
+.ui .modes button{flex:1;appearance:none;border:0;cursor:pointer;border-radius:999px;
+  padding:7px 0;background:transparent;color:rgba(255,255,255,.6);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase}
+.ui .modes button[aria-pressed="true"]{background:#fff;color:#0B0D12}
+.ui .row{display:flex;align-items:center;gap:10px}
+.ui input[type=range]{flex:1;appearance:none;height:2px;border-radius:2px;background:rgba(255,255,255,.24)}
+.ui input[type=range]::-webkit-slider-thumb{appearance:none;width:11px;height:11px;
+  border-radius:50%;background:#fff;cursor:pointer}
+.ui .play{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#fff;border-radius:999px;padding:5px 12px;cursor:pointer;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+.ui .hint{margin:0;font-family:var(--mono);font-size:9.5px;line-height:1.6;color:rgba(255,255,255,.38)}
+
+@media (prefers-reduced-motion:reduce){.card,#vPhone .rows li{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="ui">
+  <div class="modes" role="group" aria-label="Treatment">
+    <button type="button" data-v="Current" aria-pressed="true">Current</button>
+    <button type="button" data-v="Sequence" aria-pressed="false">Sequence</button>
+    <button type="button" data-v="Phone" aria-pressed="false">Phone</button>
+  </div>
+  <div class="row">
+    <input id="p" type="range" min="0" max="1" step="0.001" value="0">
+    <button type="button" class="play" id="play">Play</button>
+  </div>
+  <p class="hint" id="hint">Nine at once. The fall is good; the pile at rest hides its own text.</p>
+</div>
+
+<div class="stage">
+  <img class="plate" src="assets/story-04.jpg" alt="" aria-hidden="true">
+  <div class="scrim" aria-hidden="true"></div>
+  <h2 class="head">The pile she carries.</h2>
+
+  <section class="view on" id="vCurrent"><div class="field"></div></section>
+
+  <section class="view" id="vSequence">
+    <div class="field"></div>
+    <p class="reveal">Nine things waiting.<br><em>None of them today's.</em></p>
+  </section>
+
+  <section class="view" id="vPhone">
+    <div class="anchor">
+      <span class="spill"></span><span class="glow"></span><span class="beam"></span>
+      <div class="stack">
+        <span class="stack-tab">Still waiting</span>
+        <ul class="rows"></ul>
+        <div class="count"><span>Waiting <b id="cnt">0</b></span><span>Answered <b>0</b></span></div>
+      </div>
+    </div>
+    <p class="say">It all arrived on the same phone.<br><em>None of it got answered.</em></p>
+  </section>
+</div>
+
+<script>
+var clamp=function(v,a,b){return v<a?a:v>b?b:v;};
+
+/* one source of truth, so the three modes can never disagree */
+var DATA=[
+  {t:"Google review · unanswered", m:'Danielle R. · 3 stars · "the 6am is always full"', a:"5 months", x:"0%",  y:"1%",  rot:-5.6, spin:11},
+  {t:"Website hours · out of date", m:"Still lists the 5:30pm class you dropped",        a:"4 months", x:"27%", y:"0%",  rot:3.2,  spin:-9},
+  {t:"Yelp review · unanswered",    m:'4 stars · "wish there were more evening slots"',  a:"4 months", x:"55%", y:"5%",  rot:-2.4, spin:8},
+  {t:"Marcus Chen · no check-in",   m:"Was 3× a week for 14 months",                     a:"6 weeks",  x:"6%",  y:"23%", rot:4.6,  spin:-12},
+  {t:"2 more lapsed members",       m:"Ruth Alvarez, Tomás Peña · no contact",            a:"5 weeks",  x:"32%", y:"27%", rot:-4.9, spin:10},
+  {t:"Instagram DMs · unread",      m:"3 messages, oldest Aug 2",                         a:"13 days",  x:"59%", y:"22%", rot:2.6,  spin:-7},
+  {t:"Class-full complaint",        m:"Second this month · 6am waitlist",                 a:"9 days",   x:"2%",  y:"46%", rot:3.1,  spin:-10},
+  {t:"Prospect · no reply",         m:"Messaged Aug 7 asking about pricing",              a:"8 days",   x:"30%", y:"51%", rot:-6.2, spin:12},
+  {t:"Instagram post · never made", m:"Tuesday's 7pm clip is still on your phone",         a:"3 days",   x:"57%", y:"44%", rot:5.2,  spin:-8}
+];
+
+/* SEQUENCE slots: three rows, spaced so a card's text band is never
+   under another card. Edges touch, words never do. */
+var SLOTS=[
+  {x:"0%",  y:"0%"},   {x:"34%", y:"2%"},  {x:"68%", y:"0%"},
+  {x:"2%",  y:"35%"},  {x:"36%", y:"37%"}, {x:"70%", y:"35%"},
+  {x:"0%",  y:"70%"},  {x:"34%", y:"72%"}, {x:"68%", y:"70%"}
+];
+
+function card(d,i){
+  var el=document.createElement('article');
+  el.className='card';
+  el.innerHTML='<div class="c-head"><span class="c-title"></span><span class="age"></span></div>'+
+               '<p class="c-meta"></p>';
+  el.querySelector('.c-title').textContent=d.t;
+  el.querySelector('.age').textContent=d.a;
+  el.querySelector('.c-meta').textContent=d.m;
+  el.style.setProperty('--i',i);
+  el.style.setProperty('--rot',d.rot+'deg');
+  el.style.setProperty('--spin',d.spin+'deg');
+  /* the fall's per-card physics, same shape as index.html */
+  el.style.setProperty('--fd',(((i*0.37)%1)*0.5).toFixed(3));
+  var col=i%3;
+  el.style.setProperty('--fx',(((col-1)||((i%2)*2-1)*0.4)*(34+(i*13)%42)).toFixed(0)+'px');
+  el.style.setProperty('--fr',((d.rot>=0?1:-1)*(16+(i*17)%26)).toFixed(0)+'deg');
+  return el;
+}
+
+/* ---- CURRENT ---- */
+var fc=document.querySelector('#vCurrent .field');
+DATA.forEach(function(d,i){
+  var el=card(d,i);
+  el.style.setProperty('--x',d.x); el.style.setProperty('--y',d.y);
+  el.style.setProperty('--th',(i/DATA.length*0.46 + ((i*0.37)%1)*0.04).toFixed(3));
+  fc.appendChild(el);
+});
+
+/* ---- SEQUENCE ---- */
+var fs=document.querySelector('#vSequence .field');
+var WIN=0.070;                       /* how long each card holds the frame */
+DATA.forEach(function(d,i){
+  var el=card(d,i);
+  var s=SLOTS[i];
+  el.style.setProperty('--x',s.x); el.style.setProperty('--y',s.y);
+  el.style.setProperty('--th',(i*WIN).toFixed(3));
+  el.style.setProperty('--rate',(1/ (WIN*0.42)).toFixed(2));
+  fs.appendChild(el);
+  /* offset from its slot to centre stage, measured after layout */
+  requestAnimationFrame(function(){
+    var f=fs.getBoundingClientRect(), r=el.getBoundingClientRect();
+    el.style.setProperty('--cx',Math.round(f.left+f.width/2 - (r.left+r.width/2))+'px');
+    el.style.setProperty('--cy',Math.round(f.top+f.height/2 - (r.top+r.height/2))+'px');
+  });
+});
+
+/* ---- PHONE ---- */
+var rows=document.querySelector('#vPhone .rows'), cnt=document.getElementById('cnt');
+DATA.forEach(function(d,i){
+  var li=document.createElement('li');
+  li.innerHTML='<span class="n"></span><span class="a"></span>';
+  li.querySelector('.n').textContent=d.t.replace(' · ',' · ');
+  li.querySelector('.a').textContent=d.a;
+  li.style.setProperty('--th',(i*0.072).toFixed(3));
+  rows.appendChild(li);
+});
+
+/* ---- drive ---- */
+var stage=document.querySelector('.stage'), slider=document.getElementById('p');
+function paint(p){
+  stage.style.setProperty('--p',p.toFixed(3));
+  var n=0; for(var i=0;i<DATA.length;i++) if(p>=i*0.072+0.06) n++;
+  if(cnt._n!==n){ cnt._n=n; cnt.textContent=n; }
+}
+slider.addEventListener('input',function(){ paint(parseFloat(slider.value)); });
+
+var HINTS={
+  Current:'Nine at once. The fall is good; the pile at rest hides its own text.',
+  Sequence:'One at a time, each legible alone, then all nine read together.',
+  Phone:'Diegetic — stacks on the phone on the bench. Same anchor as beat 5.'
+};
+document.querySelectorAll('.modes button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.modes button').forEach(function(o){
+      o.setAttribute('aria-pressed',String(o===b));
+    });
+    ['Current','Sequence','Phone'].forEach(function(v){
+      document.getElementById('v'+v).classList.toggle('on', v===b.dataset.v);
+    });
+    document.getElementById('hint').textContent=HINTS[b.dataset.v];
+  });
+});
+
+var raf=null;
+document.getElementById('play').addEventListener('click',function(){
+  cancelAnimationFrame(raf);
+  var t0=null, DUR=9000;
+  raf=requestAnimationFrame(function step(ts){
+    if(t0===null) t0=ts;
+    var k=Math.min(1,(ts-t0)/DUR);
+    slider.value=k; paint(k);
+    if(k<1) raf=requestAnimationFrame(step);
+  });
+});
+
+paint(0);
+</script>
+</body>
+</html>

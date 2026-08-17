@@ -1,0 +1,16 @@
+# Vercel
+.vercel
+.vercel-n-backup
+
+# Working scratch — 124MB of superseded takes
+_to_delete/
+_fxcheck_tmp/
+
+# Video masters. These are the pre-compression sources (56MB); the
+# encodes the site actually serves live in assets/. Keep the masters
+# in your own backup, not in git — they bloat every future clone.
+_video-originals/
+
+# macOS
+.DS_Store
+**/.DS_Store
