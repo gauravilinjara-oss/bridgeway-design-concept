@@ -94,6 +94,61 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .skip:focus{top:12px}
 
 /* ============================================================
+   THE COLD OPEN
+   Sits above everything (.skip is z-index 200) and holds the page
+   until the opening can actually play. Three lines, then it asks
+   to be let in — the click is the permission, and it is also what
+   lets a browser autoplay the films that follow.
+   ============================================================ */
+.cold{position:fixed;inset:0;z-index:300;background:#000;
+  display:grid;place-items:center;
+  transition:opacity .9s var(--ease),visibility .9s}
+.cold.gone{opacity:0;visibility:hidden;pointer-events:none}
+.cold-in{display:grid;justify-items:center;gap:0;text-align:center;padding:0 var(--gut)}
+
+/* each line holds the frame alone, then clears for the next */
+.cold-line{margin:0;grid-area:1/1;
+  font-family:var(--display);font-weight:700;
+  font-size:clamp(12px,.95vw,15px);letter-spacing:.015em;line-height:1.2;
+  color:#fff;
+  opacity:0;transform:translateY(6px);
+  animation:cold-say 1.5s var(--ease) both;
+  animation-delay:calc(var(--i) * 1.1s + .3s)}
+@keyframes cold-say{
+  0%{opacity:0;transform:translateY(6px)}
+  18%,64%{opacity:1;transform:none}
+  100%{opacity:0;transform:translateY(-5px)}
+}
+
+/* revealed only once the opening can actually run */
+.cold-btn{grid-area:1/1;justify-self:center;align-self:center;
+  appearance:none;cursor:pointer;border-radius:999px;
+  padding:10px 22px;border:1px solid rgba(255,255,255,.22);
+  background:transparent;color:rgba(255,255,255,.72);
+  font-family:var(--display);font-weight:700;font-size:clamp(12px,.95vw,15px);
+  letter-spacing:.015em;
+  opacity:0;visibility:hidden;transform:translateY(8px);
+  transition:opacity .8s var(--ease),visibility .8s,transform .8s var(--ease),
+    background .3s var(--ease),color .3s var(--ease)}
+.cold.ready .cold-btn{opacity:1;visibility:visible;transform:none}
+.cold-btn:hover{background:#fff;color:#0B0D12;border-color:#fff}
+.cold-btn:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+
+/* honest: counts assets the opening needs, not a timer */
+.cold-bar{position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:rgba(255,255,255,.09);
+  transition:opacity .5s var(--ease)}
+.cold.ready .cold-bar{opacity:0}
+.cold-bar i{display:block;height:100%;width:0;background:rgba(255,255,255,.5);
+  transition:width .45s var(--ease)}
+
+@media (prefers-reduced-motion:reduce){
+  /* no held sequence for anyone who asked for less motion */
+  .cold-line{animation:none;opacity:0}
+  .cold-btn{transition:none}
+}
+
+/* ============================================================
    THE FIXED ENVIRONMENT LAYER
    One slow-cycling glow behind everything so scrolling reads as
    moving through a place rather than past stacked sections.
@@ -1838,6 +1893,121 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
 </style>
 </head>
 <body>
+
+<!-- ============================================================
+     THE COLD OPEN
+     ~17MB has to arrive before the opening plays. That wait exists
+     either way; this makes it authored rather than a stall, and it
+     asks to be let in instead of seizing the page. The progress
+     rule is real — it tracks the hero's own media.
+     ============================================================ -->
+<div class="cold" id="cold">
+  <div class="cold-in">
+    <p class="cold-line" style="--i:0">lights off...</p>
+    <p class="cold-line" style="--i:1">doors locked...</p>
+    <p class="cold-line" style="--i:2">the work is still there...</p>
+    <button type="button" class="cold-btn" id="coldBtn">come in</button>
+  </div>
+  <span class="cold-bar" aria-hidden="true"><i id="coldBar"></i></span>
+  <p class="sr" role="status" id="coldStatus">Loading the opening.</p>
+</div>
+<script>
+/* Runs before the main script so the page is never scrollable behind
+   the overlay. Two rules: the hold must be honest about what it is
+   waiting for, and it must never be able to strand anyone. */
+(function(){
+  var cold = document.getElementById('cold');
+  if (!cold) return;
+  var btn = document.getElementById('coldBtn'),
+      bar = document.getElementById('coldBar'),
+      say = document.getElementById('coldStatus'),
+      reduce = matchMedia('(prefers-reduced-motion:reduce)').matches,
+      MIN_HOLD = reduce ? 0 : 3800,   /* long enough for the three lines */
+      MAX_HOLD = 11000,               /* never wait on a stalled network */
+      t0 = Date.now(), opened = false;
+
+  /* a reload mid-page would otherwise reveal the middle of the film */
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
+
+  var SCROLL_KEYS = {ArrowDown:1,ArrowUp:1,PageDown:1,PageUp:1,Home:1,End:1,' ':1,Spacebar:1};
+  function eat(e){ e.preventDefault(); }
+  function eatKeys(e){
+    var t = e.target;
+    if (t && (/^(INPUT|BUTTON|TEXTAREA|SELECT|A)$/.test(t.tagName) || t.isContentEditable)) return;
+    if (SCROLL_KEYS[e.key]) e.preventDefault();
+  }
+  function pin(){ if (!opened && window.scrollY !== 0) window.scrollTo(0, 0); }
+  addEventListener('wheel', eat, {passive:false});
+  addEventListener('touchmove', eat, {passive:false});
+  addEventListener('keydown', eatKeys);
+  addEventListener('scroll', pin, {passive:true});
+
+  /* Progress counts assets the opening actually needs, so the rule
+     cannot finish while the first frame is still missing. */
+  var need = 1, got = 0;                       /* 1 = window load */
+  function bump(){
+    got++;
+    if (bar) bar.style.width = Math.min(100, Math.round(got / need * 100)) + '%';
+    if (got >= need) arm();
+  }
+  function track(el, evt){
+    need++;
+    var fired = false;
+    var hit = function(){ if (fired) return; fired = true; bump(); };
+    el.addEventListener(evt, hit, {once:true});
+    el.addEventListener('error', hit, {once:true});
+    return hit;
+  }
+  var heroVid = document.querySelector('#ownerOpening video');
+  if (heroVid){
+    var hv = track(heroVid, 'loadeddata');
+    if (heroVid.readyState >= 2) hv();
+  }
+  var heroPoster = heroVid && heroVid.getAttribute('poster');
+  if (heroPoster){
+    var im = new Image();
+    var hp = track(im, 'load');
+    im.src = heroPoster;
+    if (im.complete) hp();
+  }
+  if (document.readyState === 'complete') bump();
+  else addEventListener('load', bump, {once:true});
+
+  function arm(){
+    if (opened || cold.classList.contains('ready')) return;
+    var wait = Math.max(0, MIN_HOLD - (Date.now() - t0));
+    setTimeout(function(){
+      if (opened) return;
+      cold.classList.add('ready');
+      if (say) say.textContent = 'Ready. Choose Come in to start.';
+      if (btn) btn.focus();
+    }, wait);
+  }
+  /* the backstop: a dead CDN must not mean a dead page */
+  setTimeout(arm, MAX_HOLD);
+
+  function open(){
+    if (opened) return; opened = true;
+    removeEventListener('wheel', eat, {passive:false});
+    removeEventListener('touchmove', eat, {passive:false});
+    removeEventListener('keydown', eatKeys);
+    removeEventListener('scroll', pin);
+    cold.classList.add('gone');
+    if (say) say.textContent = '';
+    setTimeout(function(){
+      cold.setAttribute('hidden', '');
+      var m = document.getElementById('main');
+      if (m){ m.setAttribute('tabindex','-1'); m.focus({preventScroll:true}); }
+      dispatchEvent(new Event('resize'));   /* let the scrub re-measure */
+    }, 950);
+  }
+  if (btn) btn.addEventListener('click', open);
+  addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && !opened) open();      /* always a way out */
+  });
+})();
+</script>
 
 <a class="skip" href="#main">Skip to content</a>
 <div class="env" aria-hidden="true"></div>
