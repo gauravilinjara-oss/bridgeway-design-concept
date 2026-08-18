@@ -2249,7 +2249,7 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
     </div>
     <div class="scrim" aria-hidden="true"></div>
     <div class="whiteout" id="whiteout1" aria-hidden="true"></div>
-    <div class="nightout" id="nightout1" aria-hidden="true"><video class="no-film" src="assets/bridgeway-daisies.mp4" autoplay muted loop playsinline preload="metadata" poster="assets/bridgeway-daisies.jpg" tabindex="-1"></video></div>
+    <div class="nightout" id="nightout1" aria-hidden="true"><video class="no-film" data-src="assets/bridgeway-daisies.mp4" autoplay muted loop playsinline preload="none" poster="assets/bridgeway-daisies.jpg" tabindex="-1"></video></div>
 
     <div class="loading" id="loading" aria-hidden="true">
       <svg class="ring" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none"
@@ -2320,7 +2320,7 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
     <!-- THE WHITE INTERLUDE: the room dissolves to white underneath,
          and the product shows itself. Alex, choosing. -->
     <div class="band on-white band-video" data-band="v" data-range="0.62,0.88" data-ramp="0.245">
-      <video id="scrubVid" src="assets/alex-scrub.mp4" poster="assets/alex-scrub-poster.jpg" muted playsinline preload="auto"
+      <video id="scrubVid" data-src="assets/alex-scrub.mp4" poster="assets/alex-scrub-poster.jpg" muted playsinline preload="none"
         aria-label="Alex working through the drafts Bridgeway wrote overnight, moved by your scroll."></video>
       <p class="vid-note">Every draft waits for her. Approve, edit, or hold.</p>
     </div>
@@ -2403,7 +2403,7 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
      THE BREAK: flat, not pinned. Nav appears from here.
      ============================================================ -->
 <section class="sec" id="channels" aria-labelledby="ch-h">
-  <video class="sky-video" src="assets/clouds-loop.mp4" poster="assets/clouds-loop-poster.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true" tabindex="-1"></video>
+  <video class="sky-video" data-src="assets/clouds-loop.mp4" poster="assets/clouds-loop-poster.jpg" muted loop playsinline autoplay preload="none" aria-hidden="true" tabindex="-1"></video>
   <div class="sec-head">
     <p class="eyebrow rv">Where it works</p>
     <h2 class="h-sec rv" id="ch-h">It works where your business already is.</h2>
@@ -2534,7 +2534,7 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
      ============================================================ -->
 <section class="sec day" id="strainSec">
   <div class="strain nature-beat nature-bloom" id="strain" data-nature-beat="bloom">
-    <video class="strain-film" src="assets/bridgeway-yellow-bloom.mp4" poster="assets/bridgeway-yellow-bloom-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1"></video>
+    <video class="strain-film" data-src="assets/bridgeway-yellow-bloom.mp4" poster="assets/bridgeway-yellow-bloom-poster.jpg" autoplay muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
     <div class="strain-copy">
     <p class="eyebrow rv">The part nobody sees</p>
     <h2 class="rv">The owner is still doing the marketing after closing.</h2>
@@ -2578,7 +2578,7 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
     <span class="sc-wordmark" aria-hidden="true">bridgeway</span>
 
     <div class="sc-stage">
-      <video src="assets/flowers-loop.mp4" poster="assets/flowers-loop-poster.jpg" muted loop playsinline autoplay preload="metadata" aria-hidden="true" tabindex="-1"></video>
+      <video data-src="assets/flowers-loop.mp4" poster="assets/flowers-loop-poster.jpg" muted loop playsinline autoplay preload="none" aria-hidden="true" tabindex="-1"></video>
 
       <span class="sc-chip approved" aria-hidden="true">Approved</span>
       <span class="sc-chip drafted" aria-hidden="true">7 drafted</span>
@@ -3149,38 +3149,62 @@ function paintClips(k){
 function setClipsLive(on){
   if (scrubVid && !scrubVid.paused) scrubVid.pause();
 }
-/* Simple dev servers cannot answer Range requests, and Chrome asks for
-   media in ranges. Hand it the whole file as a Blob instead, and every
-   video element seeks in memory. */
+/* ============================================================
+   LAZY MEDIA
+   Nine videos. Five of them sit below the fold and together weigh
+   ~13.7MB, and they were all being fetched before the visitor had
+   even entered — which is most of what made the opening cost
+   17.6MB. Each now waits until it is within about a screen and a
+   half, and shows its poster until then.
+
+   Dev servers still cannot answer Range requests, so on localhost
+   the file is handed over whole as a Blob and seeking happens in
+   memory. Both paths end in the same attach().
+   ============================================================ */
 (function(){
-  /* ...but a real host (Vercel) DOES answer Range requests, and this
-     workaround would otherwise force every visitor to download all nine
-     videos in full — ~69MB — before the page settles. Dev only. */
   var isDev = location.protocol === 'file:' ||
     /^(localhost|127\.0\.0\.1|\[::1\]|.*\.local)$/.test(location.hostname);
-  if (!isDev) return;
-  var vids = [].slice.call(document.querySelectorAll('video'));
-  if (!vids.length || !window.fetch) return;
-  var cache = {};
-  vids.forEach(function(v){
-    var src = v.getAttribute('src');
+  var blobCache = {};
+
+  function attach(v, url){
+    var wasPlaying = !v.paused;
+    v.src = url; v.load();
+    var tile = v.closest('.owner-tile');
+    if (tile){
+      tile.setAttribute('data-has-video','true');
+      tile.classList.remove('media-error');
+      if (typeof ownerVideoAt === 'function' && ownerVideoAt(ownerActive) === v) playActiveOwner();
+    } else if (wasPlaying || v.autoplay){
+      v.play().catch(function(){});
+    }
+  }
+
+  function hydrate(v){
+    if (v.dataset.lazyDone) return;
+    v.dataset.lazyDone = '1';
+    var src = v.getAttribute('data-src') || v.getAttribute('src');
     if (!src) return;
-    (cache[src] = cache[src] || fetch(src).then(function(r){
+    if (!isDev){ attach(v, src); return; }
+    (blobCache[src] = blobCache[src] || fetch(src).then(function(r){
       if (!r.ok) throw new Error(r.status);
       return r.blob().then(function(b){ return URL.createObjectURL(b); });
-    })).then(function(u){
-      var wasPlaying = !v.paused;
-      v.src = u; v.load();
-      var ownerMediaTile = v.closest('.owner-tile');
-      if (ownerMediaTile){
-        ownerMediaTile.setAttribute('data-has-video','true');
-        ownerMediaTile.classList.remove('media-error');
-        if (ownerVideoAt(ownerActive) === v){
-          playActiveOwner();
-        }
-      } else if (wasPlaying || v.autoplay) v.play().catch(function(){});
-    }).catch(function(){});
-  });
+    })).then(function(u){ attach(v, u); }).catch(function(){});
+  }
+
+  /* the hero keeps loading immediately — the cold open gates on it */
+  [].slice.call(document.querySelectorAll('video:not([data-src])')).forEach(hydrate);
+
+  var lazy = [].slice.call(document.querySelectorAll('video[data-src]'));
+  if (!('IntersectionObserver' in window)){ lazy.forEach(hydrate); return; }
+  /* a screen and a half of runway, so nothing is ever caught empty */
+  var vio = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      vio.unobserve(e.target);
+      hydrate(e.target);
+    });
+  }, {rootMargin:'150% 0px 150% 0px'});
+  lazy.forEach(function(v){ vio.observe(v); });
 })();
 var stack4    = [].slice.call(document.querySelectorAll('#stack4 .panel'));
 var stack6    = [].slice.call(document.querySelectorAll('#stack6 .panel'));
