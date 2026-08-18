@@ -963,7 +963,9 @@ main{position:relative;z-index:2}
 /* the sky is footage: a looping cloud plate behind everything, with the
    gradient above as its stand-in while it loads */
 .sky-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
-#channels .sec-head,#channels .channels{position:relative;z-index:1}
+.sky-dimmer{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:rgba(8,24,47,.5);opacity:0;will-change:opacity}
+#channels .sec-head,#channels .channels{position:relative;z-index:2}
 #channels .sec-head{max-width:none;display:grid;justify-items:center}
 #channels .eyebrow{display:none}
 /* white on a white cloud is unreadable at the moment the cloud passes
@@ -1926,6 +1928,8 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
 #strainSec{position:relative;z-index:3;background:#FFFFFF;
   padding-top:clamp(64px,9vh,120px);
   padding-bottom:clamp(150px,22vh,300px)}
+#strainSec>.settle-dimmer{position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:rgba(18,21,28,.035);opacity:0;will-change:opacity}
 #showcase{position:relative;z-index:4;margin-top:-16vh;background:#FFFFFF;
   border-radius:clamp(28px,3.2vw,48px) clamp(28px,3.2vw,48px) 0 0;
   box-shadow:0 -34px 100px -30px rgba(24,26,32,.22);
@@ -1993,7 +1997,14 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
   window.scrollTo(0, 0);
 
   var SCROLL_KEYS = {ArrowDown:1,ArrowUp:1,PageDown:1,PageUp:1,Home:1,End:1,' ':1,Spacebar:1};
-  function eat(e){ e.preventDefault(); }
+  function openingGestureFor(isOpen){
+    return {prevent:!isOpen, open:!isOpen};
+  }
+  function eat(e){
+    var action = openingGestureFor(opened);
+    if (action.prevent) e.preventDefault();
+    if (action.open) open();
+  }
   function eatKeys(e){
     var t = e.target;
     if (t && (/^(INPUT|BUTTON|TEXTAREA|SELECT|A)$/.test(t.tagName) || t.isContentEditable)) return;
@@ -2457,6 +2468,7 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
      ============================================================ -->
 <section class="sec" id="channels" data-cta-light aria-labelledby="ch-h">
   <video class="sky-video" data-src="assets/clouds-loop.mp4" poster="assets/clouds-loop-poster.jpg" muted loop playsinline autoplay preload="none" aria-hidden="true" tabindex="-1"></video>
+  <div class="sky-dimmer" aria-hidden="true"></div>
   <div class="sec-head">
     <p class="eyebrow rv">Where it works</p>
     <h2 class="h-sec rv" id="ch-h">It works where your business already is.</h2>
@@ -2622,6 +2634,7 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
       <span class="reward-line"></span>
     </div>
   </div>
+  <div class="settle-dimmer" aria-hidden="true"></div>
 </section>
 
 
@@ -3452,7 +3465,25 @@ function progressOf(m){
   return clamp(-r.top / range, 0, 1);
 }
 
+var scrollTargetsDirty = true;
+
+function scrollFramePlanFor(framePending){
+  return {measure:true, requestFrame:!framePending};
+}
+
+function measureScrollTargets(){
+  if (!scrollTargetsDirty) return;
+  scrollTargetsDirty = false;
+  for (var i=0;i<MV.length;i++){
+    var m = MV[i];
+    if (!m.onScreen) continue;
+    m.target = progressOf(m);
+    if (m.raf === null){ m.raf = 1; m.lastTick = 0; }
+  }
+}
+
 function tick(now){
+  measureScrollTargets();
   var running = false;
   for (var i=0;i<MV.length;i++){
     var m = MV[i];
@@ -3469,7 +3500,7 @@ function tick(now){
     if (m.beats[0] === 1) paintPile(m.shown);
   }
   updateChrome();
-  if (running || loadK < 1) rafAll();
+  if (running || scrollTargetsDirty || loadK < 1) rafAll();
 }
 var rafPending = false;
 function rafAll(){
@@ -3479,13 +3510,9 @@ function rafAll(){
 }
 
 function onScroll(){
-  for (var i=0;i<MV.length;i++){
-    var m = MV[i];
-    if (!m.onScreen) continue;
-    m.target = progressOf(m);
-    if (m.raf === null){ m.raf = 1; m.lastTick = 0; }
-  }
-  rafAll();
+  var plan = scrollFramePlanFor(rafPending);
+  scrollTargetsDirty = plan.measure;
+  if (plan.requestFrame) rafAll();
 }
 
 /* ============================================================
@@ -4018,8 +4045,8 @@ if (reduce.matches) pinToFinalStates();
       scrollTrigger: {
         trigger: '#channels', start: 'top top',
         end: '+=' + Math.round(window.innerHeight * 1.6),
-        /* ~.4s of catch-up reads as weight; 1s reads as lag. */
-        scrub: 0.4, pin: true, anticipatePin: 1
+        /* A short catch-up keeps the sequence weighted without trailing input. */
+        scrub: 0.28, pin: true, anticipatePin: 1
       }
     });
     chTl.fromTo('.sky-video', {scale:1.16, yPercent:-5}, {scale:1.02, yPercent:0, ease:'none', duration:3.4}, 0)
@@ -4033,9 +4060,9 @@ if (reduce.matches) pinToFinalStates();
 
 
     /* dusk scrub: the sky dims as the section hands off to the dark stats */
-    gsap.fromTo('.sky-video', {filter:'brightness(1) saturate(1)'},
-      {filter:'brightness(.5) saturate(.8)', ease:'none',
-       scrollTrigger:{trigger:'#channels', start:'bottom 90%', end:'bottom 15%', scrub:0.4}});
+    gsap.fromTo('.sky-dimmer', {opacity:0},
+      {opacity:1, ease:'none',
+       scrollTrigger:{trigger:'#channels', start:'bottom 90%', end:'bottom 15%', scrub:0.28}});
 
     /* Metalab sheets: the covered section settles back and dims as the
        next sheet slides over it */
@@ -4047,15 +4074,12 @@ if (reduce.matches) pinToFinalStates();
     [['#strainSec','#showcase']].forEach(function(pair){
       var prev = document.querySelector(pair[0]), next = document.querySelector(pair[1]);
       if (!prev || !next) return;
-      var ownsPin = prev.id === 'channels';
-      /* .84 was tuned when these sheets were dark. On a white section the same
-         dim turns the page grey and reads as a dirty background, not depth —
-         the incoming sheet's shadow already does the separating. */
-      var from = {filter:'brightness(1)'}, to = {filter:'brightness(.965)'};
-      if (!ownsPin){ from.scale = 1; to.scale = .965; to.transformOrigin = '50% 100%'; }
-      to.ease = 'none';
-      to.scrollTrigger = {trigger: next, start:'top bottom', end:'top 25%', scrub:0.4};
-      gsap.fromTo(prev, from, to);
+      var overlay = prev.querySelector('.settle-dimmer');
+      if (!overlay) return;
+      gsap.fromTo(prev, {scale:1}, {scale:.965, transformOrigin:'50% 100%', ease:'none',
+        scrollTrigger:{trigger:next, start:'top bottom', end:'top 25%', scrub:0.28}});
+      gsap.fromTo(overlay, {opacity:0}, {opacity:1, ease:'none',
+        scrollTrigger:{trigger:next, start:'top bottom', end:'top 25%', scrub:0.28}});
     });
 
     /* Apple ambient continuity: the fixed environment layer tweens its
@@ -4077,12 +4101,12 @@ if (reduce.matches) pinToFinalStates();
   mm.add('(max-width: 899px) and (prefers-reduced-motion: no-preference)', function(){
     setupFigs();
     gsap.fromTo('.sky-video', {scale:1.14, yPercent:-5}, {scale:1, yPercent:0, ease:'none',
-      scrollTrigger: {trigger:'#channels', start:'top bottom', end:'top 20%', scrub:0.5}});
+      scrollTrigger: {trigger:'#channels', start:'top bottom', end:'top 20%', scrub:0.3}});
 
     /* dusk scrub: the sky dims as the section hands off to the dark stats */
-    gsap.fromTo('.sky-video', {filter:'brightness(1) saturate(1)'},
-      {filter:'brightness(.5) saturate(.8)', ease:'none',
-       scrollTrigger:{trigger:'#channels', start:'bottom 90%', end:'bottom 15%', scrub:0.4}});
+    gsap.fromTo('.sky-dimmer', {opacity:0},
+      {opacity:1, ease:'none',
+       scrollTrigger:{trigger:'#channels', start:'bottom 90%', end:'bottom 15%', scrub:0.28}});
 
     /* Apple ambient continuity: the fixed environment layer tweens its
        color as each scene arrives, so the page edges never hard-cut */

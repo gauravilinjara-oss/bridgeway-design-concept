@@ -143,6 +143,24 @@ test('opens the interactive prototype from the persistent Try yourself action', 
   assert.match(tryYourself, /href="\/try-yourself\/"/);
 });
 
+test('lets the first scroll gesture dismiss the cinematic opening', () => {
+  const helperSource = pageSource.match(/function openingGestureFor\([^]*?\n  }/)?.[0];
+  assert.ok(helperSource, 'opening gesture helper should exist');
+  const openingGestureFor = Function(`${helperSource}; return openingGestureFor;`)();
+
+  assert.deepEqual(openingGestureFor(false), { prevent: true, open: true });
+  assert.deepEqual(openingGestureFor(true), { prevent: false, open: false });
+});
+
+test('coalesces repeated scroll events into one measurement frame', () => {
+  const helperSource = pageSource.match(/function scrollFramePlanFor\([^]*?\n}/)?.[0];
+  assert.ok(helperSource, 'scroll frame planning helper should exist');
+  const scrollFramePlanFor = Function(`${helperSource}; return scrollFramePlanFor;`)();
+
+  assert.deepEqual(scrollFramePlanFor(false), { measure: true, requestFrame: true });
+  assert.deepEqual(scrollFramePlanFor(true), { measure: true, requestFrame: false });
+});
+
 test('requires a business name before the onboarding journey begins', () => {
   const helperSource = prototypeSource.match(/function normalizedBusinessName\([^]*?\n      }/)?.[0];
   assert.ok(helperSource, 'business name validation helper should exist');
