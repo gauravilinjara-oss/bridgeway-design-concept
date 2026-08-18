@@ -1,19 +1,26 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const chrome = process.env.CHROME_PATH ||
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const pagePath = fileURLToPath(new URL('../index.html', import.meta.url));
+const prototypePath = fileURLToPath(new URL('../try-yourself/index.html', import.meta.url));
 const pageUrl = process.env.BRIDGEWAY_URL || 'http://127.0.0.1:8742/';
 const pageSource = readFileSync(pagePath, 'utf8');
+const prototypeSource = readFileSync(prototypePath, 'utf8');
 
 let html = '';
+let prototypeHtml = '';
+let prototypeLayoutHtml = '';
 let profileDir = '';
+let prototypeProfileDir = '';
+let prototypeLayoutDir = '';
+let prototypeLayoutProfileDir = '';
 
 before(() => {
   profileDir = mkdtempSync(join(tmpdir(), 'bridgeway-story-test-'));
@@ -39,10 +46,67 @@ before(() => {
     if (error.code === 'ETIMEDOUT' && error.stdout) html = String(error.stdout);
     else throw error;
   }
+
+  prototypeProfileDir = mkdtempSync(join(tmpdir(), 'bridgeway-prototype-test-'));
+  try {
+    prototypeHtml = execFileSync(chrome, [
+      '--headless=new',
+      '--disable-gpu',
+      '--no-sandbox',
+      `--user-data-dir=${prototypeProfileDir}`,
+      '--virtual-time-budget=1800',
+      '--dump-dom',
+      new URL('try-yourself/', pageUrl).href,
+    ], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 6000,
+    });
+  } catch (error) {
+    if (error.code === 'ETIMEDOUT' && error.stdout) prototypeHtml = String(error.stdout);
+    else throw error;
+  }
+
+  prototypeLayoutDir = mkdtempSync(join(tmpdir(), 'bridgeway-prototype-layout-'));
+  prototypeLayoutProfileDir = mkdtempSync(join(tmpdir(), 'bridgeway-prototype-layout-profile-'));
+  const layoutPath = join(prototypeLayoutDir, 'prototype.html');
+  const instrumentedPrototype = prototypeSource.replace('</body>', `<script>
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const form = document.getElementById('businessNameForm').getBoundingClientRect();
+      const videoFrame = document.querySelector('.entry-film-frame').getBoundingClientRect();
+      document.body.dataset.entryLayout = [window.innerWidth, form.width, form.bottom, videoFrame.width, videoFrame.top]
+        .map(value => Math.round(value)).join(',');
+    }));
+  </script></body>`);
+  writeFileSync(layoutPath, instrumentedPrototype);
+
+  try {
+    prototypeLayoutHtml = execFileSync(chrome, [
+      '--headless=new',
+      '--disable-gpu',
+      '--no-sandbox',
+      '--force-device-scale-factor=1',
+      '--window-size=1509,766',
+      `--user-data-dir=${prototypeLayoutProfileDir}`,
+      '--virtual-time-budget=1800',
+      '--dump-dom',
+      pathToFileURL(layoutPath).href,
+    ], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 6000,
+    });
+  } catch (error) {
+    if (error.code === 'ETIMEDOUT' && error.stdout) prototypeLayoutHtml = String(error.stdout);
+    else throw error;
+  }
 });
 
 after(() => {
   if (profileDir) rmSync(profileDir, { recursive: true, force: true });
+  if (prototypeProfileDir) rmSync(prototypeProfileDir, { recursive: true, force: true });
+  if (prototypeLayoutDir) rmSync(prototypeLayoutDir, { recursive: true, force: true });
+  if (prototypeLayoutProfileDir) rmSync(prototypeLayoutProfileDir, { recursive: true, force: true });
 });
 
 test('keeps product mechanics after Alex reaches the morning decision', () => {
@@ -71,6 +135,44 @@ test('ends with a single action that starts with the owner’s business', () => 
 
   assert.match(close, />Start with my business</);
   assert.equal((html.match(/Tonight's pile will be waiting, done\./g) || []).length, 0);
+});
+
+test('opens the interactive prototype from the persistent Try yourself action', () => {
+  const tryYourself = html.match(/<a[^>]+id="tryme"[^>]*>/)?.[0] || '';
+
+  assert.match(tryYourself, /href="\/try-yourself\/"/);
+});
+
+test('requires a business name before the onboarding journey begins', () => {
+  const helperSource = prototypeSource.match(/function normalizedBusinessName\([^]*?\n      }/)?.[0];
+  assert.ok(helperSource, 'business name validation helper should exist');
+  const normalizedBusinessName = Function(`${helperSource}; return normalizedBusinessName;`)();
+
+  assert.equal(normalizedBusinessName('   '), '');
+  assert.equal(normalizedBusinessName('  Unbound Fitness  '), 'Unbound Fitness');
+});
+
+test('places the advertisement immediately after the business-name prompt', () => {
+  const formEnd = prototypeHtml.indexOf('</form>');
+  const advertisement = prototypeHtml.indexOf('id="advertisementVideo"');
+  const between = prototypeHtml.slice(formEnd, advertisement);
+
+  assert.ok(formEnd >= 0, 'business-name form should render');
+  assert.ok(advertisement > formEnd, 'advertisement should follow the form');
+  assert.doesNotMatch(between, /<h2\b/);
+  assert.doesNotMatch(prototypeHtml, /Your story keeps moving\.|A glimpse of how Bridgeway/);
+});
+
+test('keeps the business form compact while the advertisement spans the page', () => {
+  const layout = prototypeLayoutHtml.match(/data-entry-layout="([\d,]+)"/)?.[1]
+    .split(',').map(Number);
+  assert.ok(layout, 'rendered entry layout should be measurable');
+  const [viewportWidth, formWidth, formBottom, videoWidth, videoTop] = layout;
+
+  assert.ok(formWidth <= 650, 'business form should remain compact');
+  assert.ok(videoWidth >= viewportWidth * 0.85, `advertisement should use most of the viewport; layout ${layout.join('/')}`);
+  assert.ok(videoWidth >= formWidth * 1.8, 'advertisement should be substantially wider than the form');
+  assert.ok(videoTop > formBottom && videoTop - formBottom <= 100, 'advertisement should sit directly below the form area');
 });
 
 test('opens with four small-business owners and the supplied baker film', () => {
