@@ -172,36 +172,39 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 /* The nav is a floating frosted pill, the references' toolbar: bright pane,
    dark ink, one solid pill CTA. It floats free of the edges so it reads as
    an object in the room rather than a bar over it. */
-.nav{
-  position:fixed;top:16px;left:50%;z-index:60;
-  display:flex;align-items:center;justify-content:center;gap:24px;
-  width:max-content;max-width:calc(100vw - 2*var(--gut));
-  padding:9px 10px 9px 22px;border-radius:999px;
+/* ============================================================
+   THE PERSISTENT CTA
+   The page is 18,000px long and the only way in used to be at the
+   very bottom. This rides along the whole way.
+
+   It has to survive both halves of the film: near-white glass over
+   the night footage, and the same pill over the light sections. A
+   white hairline disappears on the light ones, so it carries a
+   faint dark edge too — one of the two always has contrast.
+   ============================================================ */
+.tryme{position:fixed;top:16px;right:var(--gut);z-index:60;
+  display:inline-flex;align-items:center;gap:12px;
+  padding:11px 18px;border-radius:999px;text-decoration:none;
   font-family:var(--mono);font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--glass-ink-2);
-  background:var(--glass);
-  border:1px solid var(--glass-line);
-  backdrop-filter:blur(30px) saturate(170%);-webkit-backdrop-filter:blur(30px) saturate(170%);
-  box-shadow:0 18px 48px -16px rgba(6,6,12,.5),0 4px 14px -6px rgba(6,6,12,.25),
+  color:var(--glass-ink);background:var(--glass);
+  border:1px solid rgba(27,27,32,.09);
+  box-shadow:0 18px 48px -16px rgba(6,6,12,.5),0 4px 14px -6px rgba(6,6,12,.22),
     inset 0 1px 0 rgba(255,255,255,.85);
-  opacity:0;transform:translate(-50%,-10px);pointer-events:none;
-  transition:opacity .7s var(--ease),transform .7s var(--ease);
+  backdrop-filter:blur(30px) saturate(170%);-webkit-backdrop-filter:blur(30px) saturate(170%);
+  opacity:0;transform:translateY(-10px);pointer-events:none;
+  transition:opacity .7s var(--ease),transform .7s var(--ease),background .3s var(--ease)}
+.tryme.show{opacity:1;transform:none;pointer-events:auto}
+.tryme:hover{background:#fff}
+.tryme:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.tryme i{width:6px;height:6px;border-radius:50%;flex:none;background:var(--accent);
+  animation:tryme-pulse 2.8s var(--ease-soft) infinite}
+@keyframes tryme-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(0,131,231,.45)}
+  50%{box-shadow:0 0 0 6px rgba(0,131,231,0)}
 }
-.nav.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
-.nav .mark{color:var(--glass-ink);font-weight:500;letter-spacing:.2em}
-.nav a{text-decoration:none;transition:color .3s var(--ease),background .3s var(--ease)}
-.nav a:hover{color:var(--glass-ink)}
-.nav-links{display:flex;align-items:center;gap:22px;min-width:0}
-.nav .nav-cta{
-  padding:9px 18px;border-radius:999px;background:#1D1C21;color:#F7F5F2;
-  box-shadow:0 6px 18px -6px rgba(6,6,12,.55);
-}
-.nav .nav-cta:hover{background:#000;color:#fff}
-/* four links plus the wordmark do not fit a phone, and a wrapped nav reads
-   as broken. Keep the one that matters, which is the page's single CTA. */
-@media (max-width:660px){
-  .nav-links a:not(.nav-cta){display:none}
-  .nav{gap:14px}
+@media (prefers-reduced-motion:reduce){.tryme i{animation:none}}
+@media (max-width:640px){
+  .tryme{top:12px;right:12px;padding:9px 13px;font-size:10px;gap:9px;letter-spacing:.1em}
 }
 
 .counter{display:none}
@@ -1682,7 +1685,6 @@ footer .disc{max-width:70ch;letter-spacing:.02em;line-height:1.7;font-family:var
   .static-hero{display:flex}
   .static-story{display:block}
   .rail,.counter{display:none}
-  .nav{position:absolute}
 }
 
 /* short scrub-capable windows keep the scrub but lose the small overlays */
@@ -1917,7 +1919,11 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
    waiting for, and it must never be able to strand anyone. */
 (function(){
   var cold = document.getElementById('cold');
-  if (!cold) return;
+  if (!cold){
+    var c = document.getElementById('tryme');
+    if (c) c.classList.add('show');
+    return;
+  }
   var btn = document.getElementById('coldBtn'),
       bar = document.getElementById('coldBar'),
       say = document.getElementById('coldStatus'),
@@ -1997,6 +2003,8 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
     if (say) say.textContent = '';
     setTimeout(function(){
       cold.setAttribute('hidden', '');
+      var cta = document.getElementById('tryme');
+      if (cta) cta.classList.add('show');
       var m = document.getElementById('main');
       if (m){ m.setAttribute('tabindex','-1'); m.focus({preventScroll:true}); }
       dispatchEvent(new Event('resize'));   /* let the scrub re-measure */
@@ -2010,6 +2018,7 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
 </script>
 
 <a class="skip" href="#main">Skip to content</a>
+<a class="tryme" id="tryme" href="#start">Try yourself<i aria-hidden="true"></i></a>
 <div class="env" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
 
