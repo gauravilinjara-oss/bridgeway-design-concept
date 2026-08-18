@@ -120,19 +120,6 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   100%{opacity:0;transform:translateY(-5px)}
 }
 
-/* revealed only once the opening can actually run */
-.cold-btn{grid-area:1/1;justify-self:center;align-self:center;
-  appearance:none;cursor:pointer;border-radius:999px;
-  padding:10px 22px;border:1px solid rgba(255,255,255,.22);
-  background:transparent;color:rgba(255,255,255,.72);
-  font-family:var(--display);font-weight:700;font-size:clamp(12px,.95vw,15px);
-  letter-spacing:.015em;
-  opacity:0;visibility:hidden;transform:translateY(8px);
-  transition:opacity .8s var(--ease),visibility .8s,transform .8s var(--ease),
-    background .3s var(--ease),color .3s var(--ease)}
-.cold.ready .cold-btn{opacity:1;visibility:visible;transform:none}
-.cold-btn:hover{background:#fff;color:#0B0D12;border-color:#fff}
-.cold-btn:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
 
 /* honest: counts assets the opening needs, not a timer */
 .cold-bar{position:absolute;left:0;right:0;bottom:0;height:1px;
@@ -1908,7 +1895,6 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
     <p class="cold-line" style="--i:0">lights off...</p>
     <p class="cold-line" style="--i:1">doors locked...</p>
     <p class="cold-line" style="--i:2">the work is still there...</p>
-    <button type="button" class="cold-btn" id="coldBtn">come in</button>
   </div>
   <span class="cold-bar" aria-hidden="true"><i id="coldBar"></i></span>
   <p class="sr" role="status" id="coldStatus">Loading the opening.</p>
@@ -1924,13 +1910,12 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
     if (c) c.classList.add('show');
     return;
   }
-  var btn = document.getElementById('coldBtn'),
-      bar = document.getElementById('coldBar'),
+  var bar = document.getElementById('coldBar'),
       say = document.getElementById('coldStatus'),
       reduce = matchMedia('(prefers-reduced-motion:reduce)').matches,
       MIN_HOLD = reduce ? 0 : 3800,   /* long enough for the three lines */
       MAX_HOLD = 11000,               /* never wait on a stalled network */
-      t0 = Date.now(), opened = false;
+      t0 = Date.now(), opened = false, armed = false;
 
   /* a reload mid-page would otherwise reveal the middle of the film */
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -1980,15 +1965,12 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
   if (document.readyState === 'complete') bump();
   else addEventListener('load', bump, {once:true});
 
+  /* No button: once the lines have played and the opening can run,
+     it opens on its own. A tap or any key skips ahead early, so the
+     hold is never something you have to sit through. */
   function arm(){
-    if (opened || cold.classList.contains('ready')) return;
-    var wait = Math.max(0, MIN_HOLD - (Date.now() - t0));
-    setTimeout(function(){
-      if (opened) return;
-      cold.classList.add('ready');
-      if (say) say.textContent = 'Ready. Choose Come in to start.';
-      if (btn) btn.focus();
-    }, wait);
+    if (opened || armed) return; armed = true;
+    setTimeout(open, Math.max(0, MIN_HOLD - (Date.now() - t0)));
   }
   /* the backstop: a dead CDN must not mean a dead page */
   setTimeout(arm, MAX_HOLD);
@@ -2010,9 +1992,9 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
       dispatchEvent(new Event('resize'));   /* let the scrub re-measure */
     }, 950);
   }
-  if (btn) btn.addEventListener('click', open);
-  addEventListener('keydown', function(e){
-    if (e.key === 'Escape' && !opened) open();      /* always a way out */
+  /* anything the visitor does means "get on with it" */
+  ['pointerdown','keydown'].forEach(function(t){
+    addEventListener(t, function(){ if (!opened) open(); }, {passive:true});
   });
 })();
 </script>
