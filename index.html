@@ -162,8 +162,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 /* ============================================================
    THE PERSISTENT CTA
    Built to Elva's spec: 16px radius (not a full pill), 16px/400
-   sans at normal tracking, a 5% fill, no shadow, and a gradient
-   stroke — the stroke is what defines the shape, not a border.
+   sans at normal tracking, a 5% fill and no shadow. Elva's blue-to-
+   purple gradient stroke is not copied — a solid blue edge in the
+   page's own accent, brightened on the dark sections so it holds.
 
    Elva can use white-on-5%-white because their page is dark the
    whole way down. This one alternates, so the pill samples what
@@ -173,6 +174,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .tryme{
   --ink:#fff;
   --fill:rgba(255,255,255,.06);
+  --edge:#4A9EFF;
   position:fixed;top:16px;right:16px;z-index:60;
   display:inline-flex;align-items:center;justify-content:center;gap:11px;
   min-width:176px;height:48px;padding:0 20px;
@@ -180,38 +182,22 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   font-family:var(--display);font-size:16px;font-weight:400;letter-spacing:normal;
   text-transform:capitalize;color:var(--ink);
   backdrop-filter:blur(10px) saturate(1.8);-webkit-backdrop-filter:blur(10px) saturate(1.8);
-  border:0;background:var(--fill);
+  border:1px solid var(--edge);background:var(--fill);
   opacity:0;transform:translateY(-10px);pointer-events:none;
   transition:opacity .7s var(--ease),transform .7s var(--ease),
-    color .45s var(--ease),background .45s var(--ease)}
+    color .45s var(--ease),background .45s var(--ease),border-color .45s var(--ease)}
 .tryme.show{opacity:1;transform:none;pointer-events:auto}
-/* The gradient has to be a RING, not a fill. The padding-box border
-   trick needs an opaque centre to mask itself against, and this pill is
-   6% glass — the gradient just showed through the whole shape. Masking
-   a 1px frame is the only version that survives a translucent fill. */
-.tryme::before{
-  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
-  background:linear-gradient(102deg,#0083E7,#5B4FE0);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  mask-composite:exclude;
-  pointer-events:none}
 
 /* Elva's 5% tint works because their page is dark the whole way. Over
    a bright sky or a photograph it gives no separation at all — and the
    blue end of the ring lands on blue sky. Light mode frosts instead. */
-.tryme.on-light{--ink:#12151C;--fill:rgba(255,255,255,.62)}
+.tryme.on-light{--ink:#12151C;--fill:rgba(255,255,255,.62);--edge:var(--accent)}
 .tryme:hover{--fill:rgba(255,255,255,.14)}
 .tryme.on-light:hover{--fill:rgba(255,255,255,.86)}
 .tryme:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.tryme i{width:7px;height:7px;border-radius:50%;flex:none;background:#0083E7;
-  animation:tryme-pulse 2.8s var(--ease-soft) infinite}
-@keyframes tryme-pulse{
-  0%,100%{box-shadow:0 0 0 0 rgba(0,131,231,.45)}
-  50%{box-shadow:0 0 0 6px rgba(0,131,231,0)}
-}
-@media (prefers-reduced-motion:reduce){.tryme i{animation:none}}
+.tryme i{width:8px;height:8px;border-radius:50%;flex:none;background:var(--dot,#4A9EFF)}
+.tryme.on-light i{--dot:var(--accent)}
+
 @media (max-width:640px){
   .tryme{top:12px;right:12px;min-width:0;height:42px;padding:0 15px;font-size:14px;gap:9px}
 }
