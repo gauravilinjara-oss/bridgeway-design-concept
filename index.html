@@ -431,6 +431,7 @@ main{position:relative;z-index:2}
   border-top:1px solid rgba(27,27,32,.12)}
 .p-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px}
 .p-status{font-family:var(--mono);font-size:11px;color:var(--text-faint);letter-spacing:.04em}
+.p-status:empty{display:none}
 /* the status line takes the room it needs instead of wrapping into a column */
 .p-foot .p-status{flex:1 1 auto;min-width:0}
 .p-foot .act,.p-foot .p-acts{flex:none}
@@ -1029,6 +1030,22 @@ main{position:relative;z-index:2}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 3px 8px -4px rgba(16,42,84,.34);
   display:grid;place-items:center;margin:0}
 .ch-ico svg{width:17px;height:17px}
+
+/* the section's own way in, under the grid — white on sky, so it reads
+   as the one solid object in a field of glass */
+.ch-cta{position:relative;z-index:1;display:grid;justify-items:center;gap:12px;
+  margin-top:clamp(28px,4.5vh,52px);text-align:center}
+.ch-cta .btn{background:#fff;color:#12151C;border:0;border-radius:999px;
+  padding:15px 30px;font-family:var(--display);font-weight:600;font-size:15.5px;
+  letter-spacing:-.008em;text-decoration:none;display:inline-flex;align-items:center;
+  box-shadow:0 20px 44px -18px rgba(16,42,84,.5),0 3px 10px -5px rgba(16,42,84,.24);
+  transition:transform .4s var(--ease),box-shadow .4s var(--ease)}
+.ch-cta .btn:hover{transform:translateY(-2px);
+  box-shadow:0 28px 58px -18px rgba(16,42,84,.56),0 4px 12px -5px rgba(16,42,84,.26)}
+.ch-cta-note{margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  color:rgba(255,255,255,.9);
+  text-shadow:0 1px 2px rgba(18,44,84,.4),0 4px 14px rgba(18,44,84,.4)}
+@media (prefers-reduced-motion:reduce){.ch-cta .btn{transition:none}}
 #channels .ch-ico{transform:translateY(8px) scale(.82);opacity:.25;
   transition:transform .7s cubic-bezier(.34,1.56,.64,1),opacity .5s var(--ease),
     box-shadow .5s var(--ease)}
@@ -1755,6 +1772,14 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
   background:linear-gradient(180deg,#6AA5E6 0%,#A7CBF2 100%)}
 .nightout .no-film{position:absolute;inset:0;width:100%;height:100%;
   object-fit:cover;opacity:.96;filter:saturate(1.02)}
+/* The joint between the movements was still visible because the two sides
+   met at different colours: daisies on one, a pale wash on the other. The
+   daisy frame now fades its own foot to exactly the pale mv2 opens with,
+   so there is no edge left to see. */
+.nightout::before{content:"";position:absolute;inset:auto 0 0;height:40vh;z-index:2;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(217,231,245,0) 0%,rgba(217,231,245,.5) 46%,
+    rgba(217,231,245,.86) 74%,#D9E7F5 100%)}
 .nightout::after{content:"";position:absolute;inset:0;z-index:1;
   background:radial-gradient(125% 95% at 50% 42%,rgba(234,242,250,0) 46%,rgba(215,232,248,.5) 100%)}
 .band.on-night{text-shadow:none;
@@ -2478,6 +2503,11 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
       <dt>Drafts</dt><dd>Nothing. This one only tells it who is missing, and since when.</dd></dl>
     </article>
   </div>
+
+  <div class="ch-cta">
+    <a class="btn" href="#start">See it on your business</a>
+    <p class="ch-cta-note">Four questions. Nothing sent without you.</p>
+  </div>
 </section>
 
 
@@ -2694,7 +2724,7 @@ var reduce = matchMedia('(prefers-reduced-motion:reduce)');
    confirms the owner's choice, but it never changes the work to "sent". */
 function approvalStateFor(approved){
   return approved
-    ? {state:'approved',label:'Approved',status:'Approved · still not sent'}
+    ? {state:'approved',label:'Approved',status:''}
     : {state:'ready',label:'Approve',status:'Draft · not sent'};
 }
 function automaticRewardStateFor(visible,reducedMotion){
@@ -2773,7 +2803,7 @@ function runAutomaticReward(card, delay){
 
   /* The card pulses for a beat as if being read, then the click is played
      out in full. The promise survives it, because approving is not sending
-     — the status lands on "Approved · still not sent", which is the point. */
+     — the button carries the state; the status line is cleared. */
   setTimeout(function(){ performClick(button); }, 360 + (delay || 0));
 }
 
