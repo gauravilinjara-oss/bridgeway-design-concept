@@ -160,46 +160,39 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
    dark ink, one solid pill CTA. It floats free of the edges so it reads as
    an object in the room rather than a bar over it. */
 /* ============================================================
-   THE PERSISTENT CTA
-   Built to Elva's spec: 16px radius (not a full pill), 16px/400
-   sans at normal tracking, a 5% fill and no shadow. No coloured
-   edge: a neutral hairline holds the shape and the dot carries the
-   only accent.
+   THE PERSISTENT CTA — Elva's exact values
+   176x48, 16px radius, 16px/400 at normal tracking, capitalize,
+   a 5% fill, no border, no shadow, backdrop blur(10px) saturate(1.8).
+   The dot takes the text colour, as theirs does.
 
-   Elva can use white-on-5%-white because their page is dark the
-   whole way down. This one alternates, so the pill samples what
-   is actually behind it and flips ink and fill to match. Without
-   that it disappears over the showcase.
+   The one thing that cannot be literal: Elva's page is dark the whole
+   way down, so 5% white works everywhere. This page alternates, and
+   white-on-white is not a subtler button, it is an invisible one. The
+   light variant is the same idea mirrored — 5% ink, ink text, still
+   no border and no shadow.
    ============================================================ */
 .tryme{
   --ink:#fff;
-  --fill:rgba(255,255,255,.06);
-  --edge:rgba(255,255,255,.20);
+  --fill:rgba(255,255,255,.05);
   position:fixed;top:16px;right:16px;z-index:60;
-  display:inline-flex;align-items:center;justify-content:center;gap:11px;
+  display:inline-flex;align-items:center;justify-content:space-between;gap:14px;
   min-width:176px;height:48px;padding:0 20px;
-  border-radius:16px;text-decoration:none;
+  border:0;border-radius:16px;box-shadow:none;text-decoration:none;
   font-family:var(--display);font-size:16px;font-weight:400;letter-spacing:normal;
-  text-transform:capitalize;color:var(--ink);
+  text-transform:capitalize;color:var(--ink);background:var(--fill);
   backdrop-filter:blur(10px) saturate(1.8);-webkit-backdrop-filter:blur(10px) saturate(1.8);
-  border:1px solid var(--edge);background:var(--fill);
   opacity:0;transform:translateY(-10px);pointer-events:none;
   transition:opacity .7s var(--ease),transform .7s var(--ease),
-    color .45s var(--ease),background .45s var(--ease),border-color .45s var(--ease)}
+    color .45s var(--ease),background .45s var(--ease)}
 .tryme.show{opacity:1;transform:none;pointer-events:auto}
-
-/* Elva's 5% tint works because their page is dark the whole way. Over
-   a bright sky or a photograph it gives no separation at all — and the
-   blue end of the ring lands on blue sky. Light mode frosts instead. */
-.tryme.on-light{--ink:#12151C;--fill:rgba(255,255,255,.62);--edge:rgba(18,21,28,.14)}
-.tryme:hover{--fill:rgba(255,255,255,.14)}
-.tryme.on-light:hover{--fill:rgba(255,255,255,.86)}
+.tryme.on-light{--ink:#12151C;--fill:rgba(18,21,28,.05)}
+.tryme:hover{--fill:rgba(255,255,255,.12)}
+.tryme.on-light:hover{--fill:rgba(18,21,28,.09)}
 .tryme:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.tryme i{width:8px;height:8px;border-radius:50%;flex:none;background:var(--dot,#4A9EFF)}
-.tryme.on-light i{--dot:var(--accent)}
-
+/* the dot is the text colour, not an accent */
+.tryme i{width:6px;height:6px;border-radius:50%;flex:none;background:currentColor}
 @media (max-width:640px){
-  .tryme{top:12px;right:12px;min-width:0;height:42px;padding:0 15px;font-size:14px;gap:9px}
+  .tryme{top:12px;right:12px;min-width:0;height:42px;padding:0 15px;font-size:14px;gap:11px}
 }
 
 .counter{display:none}
@@ -1019,9 +1012,13 @@ main{position:relative;z-index:2}
     inset 0 -1px 0 rgba(22,48,92,.07)}
 /* light entering the top-left corner and falling off, rather than a
    band ruled across the face */
-#channels .ch::after{display:block;
+#channels .ch::after{display:block;z-index:0;
   background:radial-gradient(120% 90% at 12% -8%,rgba(255,255,255,.72) 0%,
     rgba(255,255,255,.28) 32%,rgba(255,255,255,0) 66%)}
+/* The bloom is absolutely positioned with no z-index, so it painted OVER
+   the card's own text and greyed it out — the titles looked washed even
+   though they compute to near-black. Content sits above it explicitly. */
+#channels .ch > *{position:relative;z-index:1}
 /* A filled blue square with a white glyph is the thing that dated these
    — it is an app tile, not part of a glass surface. Same chip, made of
    the same material as the card, with the accent moved into the glyph. */
