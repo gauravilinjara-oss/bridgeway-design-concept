@@ -162,9 +162,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 /* ============================================================
    THE PERSISTENT CTA
    Built to Elva's spec: 16px radius (not a full pill), 16px/400
-   sans at normal tracking, a 5% fill and no shadow. Elva's blue-to-
-   purple gradient stroke is not copied — a solid blue edge in the
-   page's own accent, brightened on the dark sections so it holds.
+   sans at normal tracking, a 5% fill and no shadow. No coloured
+   edge: a neutral hairline holds the shape and the dot carries the
+   only accent.
 
    Elva can use white-on-5%-white because their page is dark the
    whole way down. This one alternates, so the pill samples what
@@ -174,7 +174,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .tryme{
   --ink:#fff;
   --fill:rgba(255,255,255,.06);
-  --edge:#4A9EFF;
+  --edge:rgba(255,255,255,.20);
   position:fixed;top:16px;right:16px;z-index:60;
   display:inline-flex;align-items:center;justify-content:center;gap:11px;
   min-width:176px;height:48px;padding:0 20px;
@@ -191,7 +191,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 /* Elva's 5% tint works because their page is dark the whole way. Over
    a bright sky or a photograph it gives no separation at all — and the
    blue end of the ring lands on blue sky. Light mode frosts instead. */
-.tryme.on-light{--ink:#12151C;--fill:rgba(255,255,255,.62);--edge:var(--accent)}
+.tryme.on-light{--ink:#12151C;--fill:rgba(255,255,255,.62);--edge:rgba(18,21,28,.14)}
 .tryme:hover{--fill:rgba(255,255,255,.14)}
 .tryme.on-light:hover{--fill:rgba(255,255,255,.86)}
 .tryme:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
@@ -622,7 +622,7 @@ main{position:relative;z-index:2}
   font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
   color:rgba(255,255,255,.7)}
 /* --- the Google review card, drawn as the real surface --- */
-.gcard{background:#fff;font-family:'Roboto','Helvetica Neue',Arial,sans-serif}
+.gcard{background:#fff;font-family:var(--display),'Helvetica Neue',Arial,sans-serif}
 .gcard::after{display:none}
 .g-top{display:flex;align-items:center;gap:10px;margin-top:2px}
 .g-avatar{width:34px;height:34px;border-radius:50%;flex:none;background:#7B1FA2;color:#fff;
@@ -946,15 +946,16 @@ main{position:relative;z-index:2}
   box-shadow:0 34px 72px -24px rgba(6,6,12,.6),inset 0 1px 0 rgba(255,255,255,.9)}
 .ch::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(148deg,rgba(255,255,255,.45),rgba(255,255,255,0) 46%)}
-.ch h3{font-size:14.5px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:9px}
+.ch h3{font-family:var(--display);font-size:16px;font-weight:600;letter-spacing:-.012em;
+  margin-bottom:12px;display:flex;align-items:center;gap:9px}
 .ch .dot{width:7px;height:7px;border-radius:50%;background:var(--accent-deep);flex:none;
   box-shadow:0 0 0 0 var(--accent-muted);animation:pulse 5.5s var(--ease-soft) -1.4s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,100,217,.3)}
                  50%{box-shadow:0 0 0 7px rgba(0,100,217,0)}}
-.ch dl{margin:0;font-size:12.5px;line-height:1.55}
-.ch dt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--text-faint);margin-bottom:3px}
-.ch dd{margin:0 0 11px;color:var(--text-secondary)}
+.ch dl{margin:0;font-size:12.5px;line-height:1.6}
+.ch dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--text-faint);margin-bottom:4px}
+.ch dd{margin:0 0 13px;color:var(--text-secondary)}
 .ch dd:last-child{margin-bottom:0}
 
 /* ============================================================
@@ -983,27 +984,54 @@ main{position:relative;z-index:2}
 /* compact premium card: icon and title share one header row, the two
    read/draft pairs sit on a disciplined 4px baseline rhythm with a
    hairline between them */
-#channels .ch{border-radius:20px;padding:20px 22px 21px;text-align:left;
+/* Real glass, not a white box at 74%. The old card was nearly opaque,
+   so the sky never came through and it read as a flat tile with a fake
+   45-degree sheen painted on. Three changes do the work:
+     - the fill drops to ~.4 so the clouds actually move behind it
+     - a bright top edge and a faint dark bottom edge, which is what
+       makes a real pane look like it has thickness
+     - the highlight becomes a soft directional bloom instead of a
+       hard diagonal band */
+#channels .ch{border-radius:22px;padding:21px 22px 23px;text-align:left;
   display:grid;grid-template-columns:auto 1fr;column-gap:13px;align-items:center;
   align-content:start;
-  --text-primary:#161618;--text-secondary:rgba(24,24,28,.74);--text-faint:rgba(24,24,28,.48);
-  color:#161618;
-  background:var(--glass);
-  border:1px solid var(--glass-line);
-  backdrop-filter:blur(34px) saturate(170%);-webkit-backdrop-filter:blur(34px) saturate(170%);
-  box-shadow:0 24px 56px -28px rgba(25,55,110,.45),
-    0 4px 14px -8px rgba(25,55,110,.2),
-    inset 0 1px 0 rgba(255,255,255,.9);
-  transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
-#channels .ch:hover{transform:translateY(-3px);
-  box-shadow:0 32px 68px -28px rgba(25,55,110,.55),inset 0 1px 0 rgba(255,255,255,.95)}
+  --text-primary:#12151C;--text-secondary:rgba(20,24,32,.76);--text-faint:rgba(20,24,32,.5);
+  color:#12151C;
+  background:linear-gradient(177deg,rgba(255,255,255,.56) 0%,rgba(255,255,255,.34) 62%,
+    rgba(238,246,255,.36) 100%);
+  border:1px solid rgba(255,255,255,.46);
+  backdrop-filter:blur(24px) saturate(185%) brightness(1.05);
+  -webkit-backdrop-filter:blur(24px) saturate(185%) brightness(1.05);
+  box-shadow:
+    0 34px 74px -34px rgba(16,42,84,.52),
+    0 3px 12px -6px rgba(16,42,84,.16),
+    inset 0 1px 0 rgba(255,255,255,.92),
+    inset 0 -1px 0 rgba(22,48,92,.07);
+  transition:transform .55s var(--ease),box-shadow .55s var(--ease),
+    background .55s var(--ease)}
+#channels .ch:hover{transform:translateY(-4px);
+  background:linear-gradient(177deg,rgba(255,255,255,.68) 0%,rgba(255,255,255,.44) 62%,
+    rgba(238,246,255,.44) 100%);
+  box-shadow:
+    0 44px 90px -34px rgba(16,42,84,.58),
+    0 4px 14px -6px rgba(16,42,84,.2),
+    inset 0 1px 0 rgba(255,255,255,.96),
+    inset 0 -1px 0 rgba(22,48,92,.07)}
+/* light entering the top-left corner and falling off, rather than a
+   band ruled across the face */
 #channels .ch::after{display:block;
-  background:linear-gradient(148deg,rgba(255,255,255,.45),rgba(255,255,255,0) 46%)}
-.ch-ico{width:40px;height:40px;border-radius:12px;grid-column:1;
-  background:linear-gradient(135deg,#0064D9,#0064D9);color:#fff;border:0;
-  box-shadow:0 6px 14px -6px rgba(0,100,217,.55);
+  background:radial-gradient(120% 90% at 12% -8%,rgba(255,255,255,.72) 0%,
+    rgba(255,255,255,.28) 32%,rgba(255,255,255,0) 66%)}
+/* A filled blue square with a white glyph is the thing that dated these
+   — it is an app tile, not part of a glass surface. Same chip, made of
+   the same material as the card, with the accent moved into the glyph. */
+.ch-ico{width:36px;height:36px;border-radius:11px;grid-column:1;
+  background:linear-gradient(170deg,rgba(255,255,255,.72),rgba(255,255,255,.4));
+  color:var(--accent-deep);
+  border:1px solid rgba(255,255,255,.6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 3px 8px -4px rgba(16,42,84,.34);
   display:grid;place-items:center;margin:0}
-.ch-ico svg{width:18px;height:18px}
+.ch-ico svg{width:17px;height:17px}
 #channels .ch-ico{transform:translateY(8px) scale(.82);opacity:.25;
   transition:transform .7s cubic-bezier(.34,1.56,.64,1),opacity .5s var(--ease),
     box-shadow .5s var(--ease)}
@@ -1035,7 +1063,12 @@ main{position:relative;z-index:2}
 #channels .ch dt{color:var(--text-faint);font-size:9.5px;letter-spacing:.15em;margin-bottom:4px}
 #channels .ch dd{color:var(--text-secondary);font-size:12.5px;line-height:1.55;margin:0 0 12px}
 #channels .ch dd:last-child{margin-bottom:0}
-#channels .ch dd + dt{border-top:1px solid rgba(22,40,80,.09);padding-top:12px}
+/* a ruled line edge to edge reads as a table row; this one fades out
+   at both ends so it behaves like a seam in the glass */
+#channels .ch dd + dt{position:relative;padding-top:13px;margin-top:1px}
+#channels .ch dd + dt::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;
+  background:linear-gradient(90deg,rgba(22,40,80,0),rgba(22,40,80,.13) 18%,
+    rgba(22,40,80,.13) 74%,rgba(22,40,80,0))}
 .sky-cta{position:relative;z-index:1;display:inline-flex;align-items:center;
   margin-top:clamp(34px,5vh,54px);padding:16px 34px;border-radius:999px;
   background:#151517;color:#F7F7F8;font-weight:600;font-size:15px;text-decoration:none;
@@ -1760,6 +1793,17 @@ p,li,dd,figcaption,.fig-label,.beat-sub,.lede{text-wrap:pretty}
   pointer-events:none;opacity:var(--foot,1);background:linear-gradient(180deg,
     rgba(16,14,17,0) 0%,rgba(16,14,17,.12) 26%,rgba(16,14,17,.42) 52%,
     rgba(16,14,17,.78) 76%,#100E11 100%)}
+/* Movement I ends on bright daisies and movement II opens on a dark
+   room. Butted together that is a hard horizontal cut across a full-bleed
+   frame — the thing that reads as a broken page rather than an edit.
+   mv2 now OPENS in the pale the daisies leave behind and develops the
+   night out of it, mirroring what --seam already does for mv1. */
+#mv2 .stage::before{content:"";position:absolute;inset:0 0 auto;height:46vh;z-index:3;
+  pointer-events:none;opacity:var(--seam2,1);
+  background:linear-gradient(180deg,
+    rgba(217,231,245,.94) 0%,rgba(217,231,245,.8) 26%,rgba(217,231,245,.5) 52%,
+    rgba(217,231,245,.2) 78%,rgba(217,231,245,0) 100%)}
+
 /* The dawn wash is a HAND-OFF, not a permanent fog. It rode at full strength
    for the whole 540vh of movement II, which is the milky smear over the night
    footage. It now rises only across the last viewport, driven by --wash. */
@@ -3892,6 +3936,12 @@ if (reduce.matches) pinToFinalStates();
     if (mv1stage) gsap.fromTo(mv1stage, {'--seam': 1}, {'--seam': 0, ease:'none',
       scrollTrigger:{trigger: mv1, start:'top top',
         end:'+=' + Math.round(window.innerHeight * 0.7), scrub:0.45}});
+
+    var mv2 = document.getElementById('mv2');
+    var mv2stage = mv2 && mv2.querySelector('.stage');
+    if (mv2stage) gsap.fromTo(mv2stage, {'--seam2': 1}, {'--seam2': 0, ease:'none',
+      scrollTrigger:{trigger: mv2, start:'top top',
+        end:'+=' + Math.round(window.innerHeight * 0.5), scrub:0.45}});
 
     if (document.querySelector('#scale .figs'))
       gsap.fromTo('#scale .figs', {yPercent: 0}, {yPercent: -11, ease:'none',
