@@ -76,6 +76,20 @@ before(() => {
       const videoFrame = document.querySelector('.entry-film-frame').getBoundingClientRect();
       document.body.dataset.entryLayout = [window.innerWidth, form.width, form.bottom, videoFrame.width, videoFrame.top]
         .map(value => Math.round(value)).join(',');
+
+      document.getElementById('businessName').value = 'Bridgeway Bloom';
+      document.getElementById('businessNameForm').requestSubmit();
+      for (let step = 0; step < 4; step += 1) {
+        document.querySelector('[data-next]').click();
+      }
+      const progress = document.querySelector('.progress');
+      document.body.dataset.finalOnboardingStep = [
+        document.querySelector('.step').textContent.trim(),
+        progress.getAttribute('aria-label'),
+        document.querySelectorAll('.progress .on').length,
+      ].join('|');
+      document.querySelector('[data-next]').click();
+      document.body.dataset.postOnboardingHeading = document.querySelector('.complete h1')?.textContent.trim() || '';
     }));
   </script></body>`);
   writeFileSync(layoutPath, instrumentedPrototype);
@@ -191,6 +205,18 @@ test('keeps the business form compact while the advertisement spans the page', (
   assert.ok(videoWidth >= viewportWidth * 0.85, `advertisement should use most of the viewport; layout ${layout.join('/')}`);
   assert.ok(videoWidth >= formWidth * 1.8, 'advertisement should be substantially wider than the form');
   assert.ok(videoTop > formBottom && videoTop - formBottom <= 100, 'advertisement should sit directly below the form area');
+});
+
+test('presents the source connection screen as the fifth onboarding step', () => {
+  const finalStep = prototypeLayoutHtml.match(/data-final-onboarding-step="([^"]+)"/)?.[1];
+
+  assert.equal(finalStep, '5 OF 5|Step 5 of 5|5');
+});
+
+test('finishes onboarding immediately after the source connection screen', () => {
+  const heading = prototypeLayoutHtml.match(/data-post-onboarding-heading="([^"]*)"/)?.[1];
+
+  assert.equal(heading, 'You’re all set.');
 });
 
 test('opens with four small-business owners and the supplied baker film', () => {
