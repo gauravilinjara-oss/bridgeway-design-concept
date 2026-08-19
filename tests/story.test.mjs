@@ -143,11 +143,10 @@ test('presents one six-beat story on cinematic and static layouts', () => {
 });
 
 test('ends with a single action that starts with the owner’s business', () => {
-  const closeStart = html.indexOf('id="close"');
-  const closeEnd = html.indexOf('</section>', closeStart);
-  const close = html.slice(closeStart, closeEnd);
+  const closingAction = html.match(/<a[^>]+id="cta"[^>]*>/)?.[0] || '';
 
-  assert.match(close, />Start with my business</);
+  assert.match(html, />Start with my business</);
+  assert.match(closingAction, /href="\/try-yourself\/"/);
   assert.equal((html.match(/Tonight's pile will be waiting, done\./g) || []).length, 0);
 });
 
